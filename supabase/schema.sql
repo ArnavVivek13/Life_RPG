@@ -1,8 +1,3 @@
--- ====================================================================
--- LIFE RPG: PRODUCTION DATABASE SCHEMA, RLS POLICIES & ANTI-CHEAT RPC
--- ====================================================================
-
--- 1. EXTENSIONS
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- 2. DROP TABLES (for clean migrations if needed)
