@@ -356,7 +356,10 @@ export default function DashboardPage() {
       const { data: items } = await supabase.from("shop_items").select("*");
       if (items && items.length > 0) setShopItems(items);
 
-      if (!user) return;
+      if (!user) {
+        router.replace("/login");
+        return;
+      }
 
       const { data: profileData } = await supabase
         .from("profiles")
@@ -390,7 +393,7 @@ export default function DashboardPage() {
     } catch (err) {
       console.error("Error loading user data:", err);
     }
-  }, [supabase]);
+  }, [supabase, router]);
 
   useEffect(() => {
     loadUserData();
@@ -561,7 +564,7 @@ export default function DashboardPage() {
           aria-modal="true"
           className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md animate-in fade-in duration-150"
         >
-          <div className="max-w-4xl w-full max-h-[90vh] overflow-y-auto pixel-box p-5 sm:p-7 rounded-2xl bg-slate-900 border-2 border-slate-700 shadow-2xl space-y-5 relative">
+          <div className="max-w-5xl w-full max-h-[90vh] overflow-y-auto pixel-box p-5 sm:p-7 rounded-2xl bg-slate-900 border-2 border-slate-700 shadow-2xl space-y-5 relative">
             
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
@@ -671,7 +674,21 @@ export default function DashboardPage() {
             )}
 
             {activeBuilding.type === "dojo" && (
-              <div className="space-y-4">
+              <div className="space-y-5 animate-in fade-in duration-200">
+                <div className="p-4 rounded-xl bg-gradient-to-r from-red-950/70 via-stone-900 to-amber-950/60 border-2 border-red-500/40 flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-red-600/20 border border-red-500/50 flex items-center justify-center text-2xl shrink-0 shadow-inner">
+                    ⚔️
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold font-pixel text-red-400">Arena Master Valerius</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-red-950 border border-red-700/60 text-red-300">Colosseum Champion</span>
+                    </div>
+                    <p className="text-xs text-slate-300 italic font-body">
+                      &ldquo;Welcome to the Iron Colosseum, warrior! Forge your physical strength through disciplined training and track your masteries across all five pillars of life.&rdquo;
+                    </p>
+                  </div>
+                </div>
                 <AttributeStats attributes={attributes} />
               </div>
             )}
@@ -975,7 +992,7 @@ export default function DashboardPage() {
           aria-modal="true"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150"
         >
-          <div className="max-w-md w-full pixel-box p-6 rounded-2xl bg-slate-900 border-2 border-amber-500/70 shadow-2xl space-y-4 text-center">
+          <div className="max-w-md w-full max-h-[90vh] overflow-y-auto pixel-box p-6 rounded-2xl bg-slate-900 border-2 border-amber-500/70 shadow-2xl space-y-4 text-center">
             <span className="text-4xl">{activeEasterEggDialog.icon}</span>
             <h3 className="text-base font-bold font-title text-amber-300">
               {activeEasterEggDialog.name}

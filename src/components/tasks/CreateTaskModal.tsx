@@ -235,7 +235,7 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated }: Crea
       aria-labelledby="modal-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150"
     >
-      <div className="max-w-lg w-full pixel-box p-6 rounded-xl bg-slate-900 border-2 border-slate-700 shadow-2xl space-y-4">
+      <div className="max-w-lg w-full max-h-[90vh] overflow-y-auto pixel-box p-6 rounded-xl bg-slate-900 border-2 border-slate-700 shadow-2xl space-y-4">
         
         {/* Header */}
         <div className="flex items-center justify-between pb-2 border-b border-slate-800">

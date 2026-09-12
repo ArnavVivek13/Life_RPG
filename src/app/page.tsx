@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Shield, Sparkles, Sword, Flame, Trophy } from "lucide-react";
+import { Sparkles, Sword } from "lucide-react";
 import { redirect } from "next/navigation";
 
 interface HomeProps {
@@ -55,54 +55,14 @@ export default function Home({ searchParams }: HomeProps) {
         </div>
 
         {/* Call to Action */}
-        <div className="pt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
+        <div className="pt-6 flex items-center justify-center">
           <Link
             href="/login"
-            className="w-full sm:w-auto px-8 py-3.5 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-sm tracking-wider uppercase font-pixel pixel-btn flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-10 py-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-sm tracking-wider uppercase font-pixel pixel-btn flex items-center justify-center gap-2.5 shadow-glowGold"
           >
             <Sword className="w-4 h-4" />
             <span>Enter the Realm</span>
           </Link>
-          <Link
-            href="/dashboard"
-            className="w-full sm:w-auto px-8 py-3.5 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-200 font-bold text-sm tracking-wider uppercase font-pixel pixel-btn flex items-center justify-center gap-2"
-          >
-            <Shield className="w-4 h-4" />
-            <span>View Questboard</span>
-          </Link>
-        </div>
-
-        {/* Feature Highlights */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-10 text-left border-t border-slate-800">
-          <div className="p-4 rounded-lg bg-slate-900/60 border border-slate-800 space-y-2">
-            <div className="flex items-center gap-2 text-rpg-gold">
-              <Trophy className="w-4 h-4" />
-              <h3 className="font-semibold text-sm">Non-Linear Progression</h3>
-            </div>
-            <p className="text-xs text-slate-400">
-              Mathematically balanced level curves with server-authoritative anti-cheat calculation.
-            </p>
-          </div>
-
-          <div className="p-4 rounded-lg bg-slate-900/60 border border-slate-800 space-y-2">
-            <div className="flex items-center gap-2 text-red-400">
-              <Flame className="w-4 h-4" />
-              <h3 className="font-semibold text-sm">Daily Streak Bonuses</h3>
-            </div>
-            <p className="text-xs text-slate-400">
-              Maintain consecutive quest streaks to earn bonus gold multipliers and special badges.
-            </p>
-          </div>
-
-          <div className="p-4 rounded-lg bg-slate-900/60 border border-slate-800 space-y-2">
-            <div className="flex items-center gap-2 text-purple-400">
-              <Sparkles className="w-4 h-4" />
-              <h3 className="font-semibold text-sm">AI Quest Classifier</h3>
-            </div>
-            <p className="text-xs text-slate-400">
-              Automatic attribute categorization, difficulty estimation, and gibberish protection.
-            </p>
-          </div>
         </div>
 
       </div>

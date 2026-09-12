@@ -62,7 +62,7 @@ export default function LoginPage() {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -72,14 +72,42 @@ export default function LoginPage() {
           },
         });
         if (error) throw error;
-        setSuccessMessage("Account created! You can now enter the realm.");
-        setTimeout(() => router.push("/dashboard"), 1200);
+
+        if (data.session) {
+          // Instant session (auto-confirm enabled)
+          setSuccessMessage("Hero forged! Entering the realm...");
+          setTimeout(() => router.push("/dashboard"), 1000);
+        } else if (data.user) {
+          // Check if identity already existed
+          if (data.user.identities && data.user.identities.length === 0) {
+            setErrorMessage("An account with this email already exists. Please sign in instead.");
+            setIsSignUp(false);
+          } else {
+            // Supabase requires email verification
+            setSuccessMessage(
+              "Account forged! Please check your email inbox to confirm your registration before logging in. (Tip: You can also disable 'Confirm email' in Supabase Auth Settings -> Providers -> Email for instant sign-in without verification)."
+            );
+            setIsSignUp(false);
+          }
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
-        if (error) throw error;
+        if (error) {
+          if (error.message.toLowerCase().includes("email not confirmed")) {
+            throw new Error(
+              "Your email has not been confirmed yet. Please check your inbox for the confirmation link, or disable 'Confirm email' in Supabase Auth settings."
+            );
+          }
+          if (error.message.toLowerCase().includes("invalid login credentials")) {
+            throw new Error(
+              "Invalid credentials. If you just forged your account, please confirm your email first, or check your password."
+            );
+          }
+          throw error;
+        }
         router.push("/dashboard");
       }
     } catch (err: any) {

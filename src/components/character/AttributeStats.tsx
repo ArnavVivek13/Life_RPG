@@ -78,7 +78,7 @@ export default function AttributeStats({ attributes }: AttributeStatsProps) {
       </div>
 
       {/* Grid of 5 Attribute Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
         {allAttrs.map((attrName) => {
           const attr = attributes.find((a) => a.name === attrName) || {
             user_id: "",
@@ -95,39 +95,39 @@ export default function AttributeStats({ attributes }: AttributeStatsProps) {
           return (
             <div
               key={attrName}
-              className={`p-3.5 rounded-xl border ${config.border} ${config.bg} flex flex-col justify-between gap-3 pixel-box transition-all hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden group`}
+              className={`p-3.5 rounded-xl border ${config.border} ${config.bg} flex flex-col justify-between gap-2.5 pixel-box transition-all hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden group min-w-0`}
             >
               {/* Header inside Card */}
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <div className={`w-6 h-6 rounded-lg ${config.bg} border border-white/10 flex items-center justify-center ${config.color}`}>
-                    <Icon className="w-3.5 h-3.5" />
+              <div className="flex items-center justify-between gap-1.5 min-w-0">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <div className={`w-6 h-6 rounded-lg ${config.bg} border border-white/10 flex items-center justify-center shrink-0 ${config.color}`}>
+                    <Icon className="w-3.5 h-3.5 shrink-0" />
                   </div>
-                  <span className={`text-xs font-bold font-title ${config.color}`}>
+                  <span className={`text-xs font-bold font-title tracking-wide truncate ${config.color}`}>
                     {attrName}
                   </span>
                 </div>
-                <span className="text-[9px] font-pixel px-2 py-0.5 rounded-full bg-slate-950 border border-slate-800 text-slate-200 font-bold shadow-inner">
+                <span className="shrink-0 whitespace-nowrap text-[9px] font-pixel px-1.5 py-0.5 rounded bg-slate-950 border border-slate-700/80 text-amber-300 font-bold shadow-inner">
                   LV.{attr.level}
                 </span>
               </div>
 
               {/* Description */}
-              <p className="text-[10px] text-slate-400 leading-tight">
+              <p className="text-[10px] text-slate-400 leading-snug line-clamp-2 min-h-[2.4em]">
                 {config.desc}
               </p>
 
               {/* XP Progress Bar */}
-              <div className="space-y-1.5 pt-1">
-                <div className="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800 p-0.5 shadow-inner">
+              <div className="space-y-1 pt-1">
+                <div className="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800 p-0.5 shadow-inner">
                   <div
                     className={`h-full rounded-full ${config.barColor} transition-all duration-500`}
                     style={{ width: `${progressPercent}%` }}
                   />
                 </div>
                 <div className="flex items-center justify-between text-[9px] text-slate-400 font-mono">
-                  <span>{attr.xp} XP</span>
-                  <span className="text-slate-300 font-bold">{progressPercent}%</span>
+                  <span className="truncate">{attr.xp} XP</span>
+                  <span className="text-slate-300 font-bold shrink-0">{progressPercent}%</span>
                 </div>
               </div>
 
