@@ -43,12 +43,14 @@ export interface ShopItem {
 }
 
 export interface UserInventory {
+  id?: string;
   user_id: string;
   item_id: string;
   purchased_at: string;
   equipped: boolean;
   item?: ShopItem;
 }
+
 
 export interface TaskClassificationResult {
   category: AttributeName;

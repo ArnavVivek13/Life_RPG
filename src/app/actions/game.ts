@@ -175,3 +175,52 @@ export async function buyShopItemAction(itemId: string) {
   revalidatePath("/dashboard");
   return { success: true, message: `Purchased ${item.name}!` };
 }
+
+/**
+ * Server Action: Equip or Unequip an item from inventory
+ */
+export async function equipItemAction(itemId: string, equip: boolean) {
+  const supabase = createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { success: false, error: "Unauthorized." };
+  }
+
+  // 1. Fetch item details
+  const { data: inventoryItem, error: invError } = await supabase
+    .from("user_inventory")
+    .select("*, item:shop_items(*)")
+    .eq("user_id", user.id)
+    .eq("item_id", itemId)
+    .single();
+
+  if (invError || !inventoryItem) {
+    return { success: false, error: "Item not in your inventory." };
+  }
+
+  // 2. If it's a theme, also update profile current_theme
+  if (inventoryItem.item?.type === "theme" && equip) {
+    const themeName = inventoryItem.item.asset_key.replace("theme-", "") || "default";
+    await supabase
+      .from("profiles")
+      .update({ current_theme: themeName })
+      .eq("id", user.id);
+  }
+
+  // 3. Update inventory equip status
+  const { error: updateError } = await supabase
+    .from("user_inventory")
+    .update({ equipped: equip })
+    .eq("user_id", user.id)
+    .eq("item_id", itemId);
+
+  if (updateError) {
+    return { success: false, error: updateError.message };
+  }
+
+  revalidatePath("/shop");
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
