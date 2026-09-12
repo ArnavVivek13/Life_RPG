@@ -7,7 +7,7 @@ import { Profile, Attribute, Task, UserInventory, ShopItem } from "@/types/datab
 import { completeTaskAction } from "@/app/actions/game";
 import WorldMap from "@/components/world/WorldMap";
 import WorldHUD from "@/components/world/WorldHUD";
-import { Building } from "@/components/world/WorldMapData";
+import { Building, EasterEgg, DistrictZone, DISTRICT_ZONES, BUILDINGS } from "@/components/world/WorldMapData";
 import CharacterCard from "@/components/character/CharacterCard";
 import AttributeStats from "@/components/character/AttributeStats";
 import TaskList from "@/components/tasks/TaskList";
@@ -15,7 +15,8 @@ import CreateTaskModal from "@/components/tasks/CreateTaskModal";
 import ShopGrid from "@/components/shop/ShopGrid";
 import InventoryGrid from "@/components/shop/InventoryGrid";
 import LevelUpModal from "@/components/ui/LevelUpModal";
-import { X, Sparkles, ShoppingBag, Package } from "lucide-react";
+import confetti from "canvas-confetti";
+import { X, Sparkles, ShoppingBag, Package, Heart, Coins, BookOpen } from "lucide-react";
 
 // Mock Fallback Data
 const DEFAULT_PROFILE: Profile = {
@@ -134,11 +135,18 @@ export default function DashboardPage() {
   const [inventory, setInventory] = useState<UserInventory[]>([]);
   const [shopItems, setShopItems] = useState<ShopItem[]>(DEFAULT_SHOP_ITEMS);
 
-  // Active Building Modal state
+  // Active Building & Easter Egg states
   const [activeBuilding, setActiveBuilding] = useState<Building | null>(null);
   const [nearbyBuilding, setNearbyBuilding] = useState<Building | null>(null);
+  const [nearbyEgg, setNearbyEgg] = useState<EasterEgg | null>(null);
+  const [currentDistrict, setCurrentDistrict] = useState<DistrictZone>(DISTRICT_ZONES[3]);
+  const [activeEasterEggDialog, setActiveEasterEggDialog] = useState<EasterEgg | null>(null);
+
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [shopTab, setShopTab] = useState<"armory" | "backpack">("armory");
+
+  // Easter Egg claim tracker
+  const [claimedEggs, setClaimedEggs] = useState<{ [key: string]: boolean }>({});
 
   // Level up celebrate modal
   const [levelUpData, setLevelUpData] = useState<{
@@ -154,7 +162,7 @@ export default function DashboardPage() {
     awardedGold: 0,
   });
 
-  // Load User Data from Supabase
+  // Load User Data
   const loadUserData = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -257,6 +265,33 @@ export default function DashboardPage() {
     }
   };
 
+  // Easter Egg Interaction
+  const handleEasterEggTrigger = (egg: EasterEgg) => {
+    setActiveEasterEggDialog(egg);
+
+    if (egg.type === "cat") {
+      // Award +5 Social XP
+      setAttributes((prev) =>
+        prev.map((a) => (a.name === "Social" ? { ...a, xp: a.xp + 5 } : a))
+      );
+      confetti({ particleCount: 30, spread: 50, origin: { y: 0.7 }, colors: ["#EC4899", "#F43F5E"] });
+    } else if (egg.type === "dummy") {
+      // Award +5 Strength XP
+      setAttributes((prev) =>
+        prev.map((a) => (a.name === "Strength" ? { ...a, xp: a.xp + 5 } : a))
+      );
+    } else if (egg.type === "chest" && !claimedEggs[egg.id]) {
+      // Award +30 Gold
+      setProfile((prev) => ({ ...prev, gold: prev.gold + 30 }));
+      setClaimedEggs((prev) => ({ ...prev, [egg.id]: true }));
+      confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 }, colors: ["#F59E0B", "#FDE68A"] });
+    } else if (egg.type === "wishing_well") {
+      if (profile.gold >= 5) {
+        setProfile((prev) => ({ ...prev, gold: prev.gold - 5 }));
+      }
+    }
+  };
+
   const handleDeleteTask = (taskId: string) => {
     setTasks((prev) => prev.filter((t) => t.id !== taskId));
   };
@@ -266,54 +301,46 @@ export default function DashboardPage() {
     router.push("/login");
   };
 
-  // Check equipped cosmetics
   const hasCrown = inventory.some((i) => i.equipped && i.item?.asset_key === "gear-golden-crown");
   const hasHood = inventory.some((i) => i.equipped && i.item?.asset_key === "gear-mage-hood");
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0B0E14] via-[#121722] to-[#0B0E14] text-slate-100 p-3 sm:p-6 select-none">
-      <div className="max-w-5xl mx-auto space-y-4">
+      <div className="max-w-6xl mx-auto space-y-4">
         
-        {/* Top GBA HUD Bar */}
+        {/* Top HUD Bar */}
         <WorldHUD
           profile={profile}
           viewMode={viewMode}
           onToggleViewMode={() => setViewMode((v) => (v === "world" ? "classic" : "world"))}
-          nearbyBuildingName={nearbyBuilding?.name}
+          nearbyBuilding={nearbyBuilding}
+          nearbyEasterEgg={nearbyEgg}
+          currentDistrict={currentDistrict}
+          activeWaypoint={null}
           onInteract={() => {
             if (nearbyBuilding) setActiveBuilding(nearbyBuilding);
+            else if (nearbyEgg) handleEasterEggTrigger(nearbyEgg);
           }}
           onOpenShop={() => {
-            const shopBld = {
-              id: "shop",
-              name: "Guild Bazaar & Armory",
-              subtitle: "Trade gold for themes, hats & badges",
-              type: "shop" as const,
-              x: 0,
-              y: 0,
-              width: 0,
-              height: 0,
-              doorX: 0,
-              doorY: 0,
-              color: "",
-              roofColor: "",
-              trimColor: "",
-              signIcon: "🛒",
-            };
+            const shopBld = BUILDINGS.find((b) => b.id === "shop") || BUILDINGS[3];
             setActiveBuilding(shopBld);
           }}
           onSignOut={handleSignOut}
         />
 
-        {/* VIEW 1: Pokémon GBA Interactive 2D World Map */}
+        {/* VIEW 1: Sprawling 2D World Map with Scrolling Viewport & GTA Radar */}
         {viewMode === "world" ? (
           <div className="w-full flex justify-center animate-in fade-in duration-300">
             <WorldMap
               theme={profile.current_theme}
               hasCrown={hasCrown}
               hasHood={hasHood}
+              userGold={profile.gold}
               onEnterBuilding={(bld) => setActiveBuilding(bld)}
+              onEasterEggTrigger={handleEasterEggTrigger}
               onNearbyBuildingChange={(bld) => setNearbyBuilding(bld)}
+              onNearbyEasterEggChange={(egg) => setNearbyEgg(egg)}
+              onDistrictChange={(dist) => setCurrentDistrict(dist)}
             />
           </div>
         ) : (
@@ -355,20 +382,22 @@ export default function DashboardPage() {
                   <h2 className="text-lg sm:text-xl font-bold font-title text-rpg-goldLight">
                     {activeBuilding.name}
                   </h2>
-                  <p className="text-xs text-slate-400 font-body">{activeBuilding.subtitle}</p>
+                  <p className="text-xs text-slate-400 font-body">
+                    {activeBuilding.district} • {activeBuilding.subtitle}
+                  </p>
                 </div>
               </div>
 
               <button
                 onClick={() => setActiveBuilding(null)}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors focus:ring-2 focus:ring-amber-400"
-                aria-label="Close building modal"
+                aria-label="Close modal"
               >
                 <X className="w-6 h-6" />
               </button>
             </div>
 
-            {/* Modal Body Based on Building Type */}
+            {/* Modal Body */}
             {activeBuilding.type === "guild" && (
               <div className="space-y-4">
                 <TaskList
@@ -387,10 +416,7 @@ export default function DashboardPage() {
                   <h3 className="text-sm font-bold font-title text-slate-200 mb-3">
                     Equipped Gear & Cosmetics
                   </h3>
-                  <InventoryGrid
-                    inventory={inventory}
-                    onEquipChanged={loadUserData}
-                  />
+                  <InventoryGrid inventory={inventory} onEquipChanged={loadUserData} />
                 </div>
               </div>
             )}
@@ -430,43 +456,136 @@ export default function DashboardPage() {
                     onItemPurchased={loadUserData}
                   />
                 ) : (
-                  <InventoryGrid
-                    inventory={inventory}
-                    onEquipChanged={loadUserData}
-                  />
+                  <InventoryGrid inventory={inventory} onEquipChanged={loadUserData} />
                 )}
+              </div>
+            )}
+
+            {activeBuilding.type === "observatory" && (
+              <div className="space-y-4 text-center p-4">
+                <div className="w-16 h-16 rounded-2xl bg-purple-950/60 border-2 border-purple-500/50 flex items-center justify-center text-3xl mx-auto animate-pulse">
+                  🔮
+                </div>
+                <h3 className="text-base font-bold font-title text-purple-300">
+                  Arcane Spire of Intellect
+                </h3>
+                <p className="text-xs text-slate-300 max-w-md mx-auto font-body">
+                  Study routines, coding projects, and reading challenges channel here to sharpen your intellect attribute.
+                </p>
+                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 max-w-md mx-auto text-left space-y-1">
+                  <span className="text-xs font-semibold text-purple-300">Active Intellect Bonus:</span>
+                  <p className="text-xs text-slate-400">
+                    Completing Intellect quests before their deadline awards up to +1.5x Speed XP!
+                  </p>
+                </div>
               </div>
             )}
 
             {activeBuilding.type === "dojo" && (
               <div className="space-y-4">
                 <AttributeStats attributes={attributes} />
-                <p className="text-xs text-slate-400 text-center font-body">
-                  Complete specialized quests in Intellect, Strength, Discipline, Creativity, or Social to level up each discipline.
-                </p>
               </div>
             )}
 
-            {activeBuilding.type === "shrine" && (
+            {activeBuilding.type === "cafe" && (
               <div className="space-y-4 text-center p-4">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500/20 to-red-500/20 border-2 border-amber-500/50 flex items-center justify-center text-3xl mx-auto animate-pulse">
-                  🔥
+                <div className="w-16 h-16 rounded-2xl bg-amber-950/60 border-2 border-amber-500/50 flex items-center justify-center text-3xl mx-auto">
+                  ☕
                 </div>
                 <h3 className="text-base font-bold font-title text-amber-300">
-                  {profile.streak_count}-Day Flame of Discipline
+                  The Bard&apos;s Artisan Lounge
                 </h3>
                 <p className="text-xs text-slate-300 max-w-md mx-auto font-body">
-                  Your daily streak grants an automatic <strong>+{(Math.min(10, profile.streak_count) * 5)}% Gold Multiplier</strong> on every completed quest!
+                  A gathering ground for creative arts, music production, writing, and social camaraderie.
                 </p>
-                <div className="grid grid-cols-4 gap-2 max-w-sm mx-auto pt-2 text-[10px] font-pixel">
-                  <div className="p-2 rounded bg-slate-950 border border-slate-800 text-slate-400">3d: +15%</div>
-                  <div className="p-2 rounded bg-slate-950 border border-slate-800 text-slate-400">7d: +35%</div>
-                  <div className="p-2 rounded bg-slate-950 border border-amber-500/50 text-amber-300">10d: +50%</div>
-                  <div className="p-2 rounded bg-slate-950 border border-purple-500/50 text-purple-300">30d: Badge</div>
+              </div>
+            )}
+
+          </div>
+        </div>
+      )}
+
+      {/* EASTER EGG DIALOG MODAL */}
+      {activeEasterEggDialog && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150"
+        >
+          <div className="max-w-md w-full pixel-box p-6 rounded-2xl bg-slate-900 border-2 border-amber-500/70 shadow-2xl space-y-4 text-center">
+            <span className="text-4xl">{activeEasterEggDialog.icon}</span>
+            <h3 className="text-base font-bold font-title text-amber-300">
+              {activeEasterEggDialog.name}
+            </h3>
+
+            {activeEasterEggDialog.type === "cat" && (
+              <div className="space-y-2">
+                <p className="text-xs text-slate-300 font-body">
+                  You gently pet Mochi behind the ears. The cat lets out a warm, soothing purr and rubs against your boots.
+                </p>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-500/20 text-pink-300 text-xs font-semibold">
+                  <Heart className="w-3.5 h-3.5 text-pink-400 fill-pink-400" />
+                  <span>+5 Social Discipline XP</span>
                 </div>
               </div>
             )}
 
+            {activeEasterEggDialog.type === "wishing_well" && (
+              <div className="space-y-2">
+                <p className="text-xs text-slate-300 font-body">
+                  You toss 5 Gold into the crystal waters. The well glows with celestial radiance and whispers a fortune:
+                </p>
+                <blockquote className="p-3 rounded-lg bg-slate-950 border border-slate-800 text-xs italic text-amber-200">
+                  &ldquo;Consistency in small quests conquers the greatest dragons in reality.&rdquo;
+                </blockquote>
+                <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-semibold">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Granted 15s Radiant Aura</span>
+                </div>
+              </div>
+            )}
+
+            {activeEasterEggDialog.type === "chest" && (
+              <div className="space-y-2">
+                <p className="text-xs text-slate-300 font-body">
+                  You discovered a concealed pirate cache hidden between the whispering pine roots!
+                </p>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-semibold">
+                  <Coins className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Claimed +30 Gold!</span>
+                </div>
+              </div>
+            )}
+
+            {activeEasterEggDialog.type === "monolith" && (
+              <div className="space-y-2 text-left">
+                <p className="text-xs text-slate-300 font-body">
+                  You trace the glowing runes etched upon the ancient monolith:
+                </p>
+                <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 text-[11px] text-cyan-300 font-mono space-y-1">
+                  <p>&ldquo;To all adventurers of Valoria: Every task checked is a step toward true mastery.&rdquo;</p>
+                  <p className="text-slate-500">— Archmage TechZephyr, Year 2026</p>
+                </div>
+              </div>
+            )}
+
+            {activeEasterEggDialog.type === "dummy" && (
+              <div className="space-y-2">
+                <p className="text-xs text-slate-300 font-body">
+                  *WHACK!* You deliver a powerful combination strike to the training dummy.
+                </p>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/20 text-red-300 text-xs font-semibold">
+                  <span>🥊 +5 Strength Discipline XP</span>
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={() => setActiveEasterEggDialog(null)}
+              className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider font-pixel pixel-btn"
+            >
+              Continue Exploring
+            </button>
           </div>
         </div>
       )}
