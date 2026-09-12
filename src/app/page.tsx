@@ -1,7 +1,20 @@
 import Link from "next/link";
 import { Shield, Sparkles, Sword, Flame, Trophy } from "lucide-react";
+import { redirect } from "next/navigation";
 
-export default function Home() {
+interface HomeProps {
+  searchParams: { [key: string]: string | string[] | undefined };
+}
+
+export default function Home({ searchParams }: HomeProps) {
+  // If Supabase redirected ?code= here (Site URL mismatch fallback),
+  // forward it to /auth/callback so the session is properly exchanged.
+  const code = searchParams["code"];
+  if (code) {
+    const codeValue = Array.isArray(code) ? code[0] : code;
+    redirect(`/auth/callback?code=${encodeURIComponent(codeValue)}`);
+  }
+
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-[#0B0E14] via-[#121722] to-[#0B0E14] text-slate-100">
       <div className="max-w-3xl w-full text-center space-y-8">
