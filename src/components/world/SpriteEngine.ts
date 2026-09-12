@@ -1,5 +1,5 @@
 /**
- * Life RPG — GBA Gen III Pixel Art Sprite & Environmental Rendering Engine
+ * Life RPG — 16-Bit Pixel Art Sprite & Environmental Rendering Engine
  * Strictly NO gradients, NO shadowBlur, NO smooth arcs — flat stepped tile colors only.
  * All coordinates are integer-snapped with Math.floor() for crisp pixel rendering.
  */
@@ -25,8 +25,8 @@ export interface ThemePalette {
 }
 
 export const PALETTES: Record<string, ThemePalette> = {
-  classic_firered: {
-    name: "Kanto Day",
+  classic_day: {
+    name: "Verdant Day",
     grassBase: "#78C860", grassDark: "#509840", grassTuft: "#387830",
     pathBase: "#E0D098", pathDark: "#C8B878", pathEdge: "#986848",
     waterBase: "#5898D0", waterLight: "#78B8E8", waterDeep: "#3868A0",
@@ -59,8 +59,8 @@ export const PALETTES: Record<string, ThemePalette> = {
     playerTunic: "#183870", playerPants: "#101828",
     ambientParticle: "#304858", nearbyGlow: "#FFD060",
   },
-  johto_autumn: {
-    name: "Johto Autumn",
+  golden_autumn: {
+    name: "Golden Autumn",
     grassBase: "#C88848", grassDark: "#A86830", grassTuft: "#885020",
     pathBase: "#E0C890", pathDark: "#C8A868", pathEdge: "#A07840",
     waterBase: "#5888B8", waterLight: "#70A0D0", waterDeep: "#386890",
@@ -77,7 +77,7 @@ export const PALETTES: Record<string, ThemePalette> = {
     ambientParticle: "#E89858", nearbyGlow: "#F8C030",
   },
   lavender_ghost: {
-    name: "Lavender Town",
+    name: "Lavender Spirit",
     grassBase: "#8878A8", grassDark: "#685890", grassTuft: "#504070",
     pathBase: "#C8B8D8", pathDark: "#A898B8", pathEdge: "#887898",
     waterBase: "#587898", waterLight: "#78A0B8", waterDeep: "#385870",
@@ -114,13 +114,13 @@ export const PALETTES: Record<string, ThemePalette> = {
 
 /** Get canonical palette safely without polluting PALETTES keys */
 export function getPalette(themeKey?: string): ThemePalette {
-  if (!themeKey) return PALETTES.classic_firered;
+  if (!themeKey) return PALETTES.classic_day;
   if (PALETTES[themeKey]) return PALETTES[themeKey];
   if (themeKey === "cyberpunk" || themeKey === "theme-cyberpunk") return PALETTES.cyberpunk_gba;
   if (themeKey === "emerald" || themeKey === "night" || themeKey === "theme-emerald") return PALETTES.emerald_night;
-  if (themeKey === "autumn" || themeKey === "johto" || themeKey === "theme-autumn") return PALETTES.johto_autumn;
+  if (themeKey === "autumn" || themeKey === "golden" || themeKey === "golden_autumn" || themeKey === "theme-autumn") return PALETTES.golden_autumn;
   if (themeKey === "lavender" || themeKey === "ghost" || themeKey === "theme-lavender") return PALETTES.lavender_ghost;
-  return PALETTES.classic_firered;
+  return PALETTES.classic_day;
 }
 
 const fp = (n: number) => Math.floor(n);
@@ -930,7 +930,7 @@ export function drawPlayerSprite({
 }:DrawSpriteOptions) {
   ctx.save();
   ctx.translate(fp(x), fp(y));
-  const pal = palette ?? PALETTES.classic_firered;
+  const pal = palette ?? PALETTES.classic_day;
   const bobY = isMoving && (frame === 1 || frame === 3) ? -1 : 0;
   const skinColor = "#F8C898", hairColor = "#583010", oc = "#201008";
 
@@ -1235,7 +1235,7 @@ export function drawPlayerSprite({
 
 // ─── DECOR ──────────────────────────────────────────────────────────────────
 export function drawDecor(ctx: CanvasRenderingContext2D,decor: any,tick: number,theme: string,pal?: ThemePalette) {
-  const palette=pal??PALETTES.classic_firered;
+  const palette=pal??PALETTES.classic_day;
   const {type,x,y,w=0,h=0,variant=0}=decor;
   ctx.save(); ctx.translate(fp(x),fp(y));
   switch(type){

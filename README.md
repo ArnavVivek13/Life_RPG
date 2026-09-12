@@ -38,7 +38,7 @@
 - **🌐 Real-Time Live Web Search:** DuckDuckGo HTML scraping + Tavily AI search grounding for factual effort, duration, and difficulty lookup.
 - **🛡️ Server-Authoritative Anti-Cheat:** XP calculations, level thresholds, gold rewards, and streak tracking run strictly inside PostgreSQL RPC stored procedures.
 - **📈 Balanced Non-Linear Progression:** Levels scale exponentially: $\text{XP}(n) = \lfloor 100 \times 1.15^{n-1} \rfloor$.
-- **🛒 Guild Armory & Cosmetic Inventory:** 15 distinct catalog items including character armor, weapons, capes, crowns, and dynamic world map color palettes (Kanto Day, Emerald Night, Johto Autumn, Lavender Town, Neon Byte).
+- **🛒 Guild Armory & Cosmetic Inventory:** 15 distinct catalog items including character armor, weapons, capes, crowns, and dynamic world map color palettes (Verdant Day, Emerald Night, Golden Autumn, Lavender Spirit, Neon Byte).
 - **🎉 Tactile Celebrations:** 16-bit retro pixel design, procedural Web Audio fanfare synthesis, and particle confetti cannons.
 
 ---
@@ -236,10 +236,10 @@ The map features distinct regions with custom tile rendering:
 
 ### 1. Palette Themes
 The user can switch or purchase 5 distinct color palettes via the HUD:
-- **Kanto Day**: Bright emerald green fields with honey-colored thatch.
+- **Verdant Day**: Bright emerald green fields with honey-colored thatch.
 - **Emerald Night**: Deep moonlight blue tones with glowing torch accents.
-- **Johto Autumn**: Amber grasslands with golden-red maple canopies.
-- **Lavender Town**: Ethereal purple dusk with mystic spectral lanterns.
+- **Golden Autumn**: Amber grasslands with golden-red maple canopies.
+- **Lavender Spirit**: Ethereal purple dusk with mystic spectral lanterns.
 - **Neon Byte**: Cyberpunk obsidian roads with electric cyan and magenta highlights.
 
 ### 2. Synthesized Web Audio API Fanfare

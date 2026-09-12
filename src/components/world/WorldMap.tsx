@@ -62,28 +62,28 @@ interface NPCState {
 }
 
 function normalizeTheme(t?: string): string {
-  if (!t) return "classic_firered";
+  if (!t) return "classic_day";
   if (PALETTES[t]) return t;
   if (t === "cyberpunk") return "cyberpunk_gba";
   if (t === "emerald" || t === "night") return "emerald_night";
-  if (t === "autumn" || t === "johto") return "johto_autumn";
+  if (t === "autumn" || t === "golden") return "golden_autumn";
   if (t === "lavender" || t === "ghost") return "lavender_ghost";
-  return "classic_firered";
+  return "classic_day";
 }
 
 const THEME_ICONS: Record<string, string> = {
-  classic_firered: "🌿",
+  classic_day: "🌿",
   emerald_night: "🌙",
-  johto_autumn: "🍂",
+  golden_autumn: "🍂",
   lavender_ghost: "👻",
   cyberpunk_gba: "⚡",
 };
 
 const CANONICAL_THEMES = [
-  { key: "classic_firered", name: "Kanto Day", icon: "🌿" },
+  { key: "classic_day", name: "Verdant Day", icon: "🌿" },
   { key: "emerald_night", name: "Emerald Night", icon: "🌙" },
-  { key: "johto_autumn", name: "Johto Autumn", icon: "🍂" },
-  { key: "lavender_ghost", name: "Lavender Town", icon: "👻" },
+  { key: "golden_autumn", name: "Golden Autumn", icon: "🍂" },
+  { key: "lavender_ghost", name: "Lavender Spirit", icon: "👻" },
   { key: "cyberpunk_gba", name: "Neon Byte", icon: "⚡" },
 ] as const;
 
@@ -113,7 +113,7 @@ export default function WorldMap({
     }
   }, [theme]);
 
-  const activePalette: ThemePalette = PALETTES[activeTheme] || PALETTES.classic_firered;
+  const activePalette: ThemePalette = PALETTES[activeTheme] || PALETTES.classic_day;
 
   // Player spawns in Central Market open plaza
   const playerPosRef = useRef({ x: 1260, y: 1380 });
@@ -378,7 +378,7 @@ export default function WorldMap({
       ctx.clearRect(0, 0, VW, VH);
       ctx.translate(-Math.floor(camX), -Math.floor(camY));
 
-      // ── 5. Ground Layers (Strict GBA Gen 3 Flat Pixel Art) ────────────────
+      // ── 5. Ground Layers (16-Bit Retro Pixel Art) ────────────────
       // Base grass
       ctx.fillStyle = activePalette.grassBase;
       ctx.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
@@ -687,7 +687,7 @@ export default function WorldMap({
       className="relative w-full flex flex-col items-center justify-center select-none overflow-hidden rounded-2xl bg-slate-950 border-2 border-slate-700 shadow-2xl focus:outline-none focus:ring-2 focus:ring-amber-400"
       style={{ touchAction: "none" }}
     >
-      {/* GTA V Style Radar */}
+      {/* Tactical Mini-Map Radar */}
       <div className="absolute top-4 right-4 z-30 pointer-events-auto">
         <MiniMapRadar
           playerX={playerCoords.x}
@@ -776,7 +776,7 @@ export default function WorldMap({
         />
       </div>
 
-      {/* GTA V Full World Map Modal */}
+      {/* Full Realm World Map Modal */}
       <RealmFullMapModal
         isOpen={isFullMapOpen}
         onClose={() => setIsFullMapOpen(false)}

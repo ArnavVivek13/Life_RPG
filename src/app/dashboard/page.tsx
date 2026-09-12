@@ -463,7 +463,7 @@ export default function DashboardPage() {
           onSignOut={handleSignOut}
         />
 
-        {/* VIEW 1: Sprawling 2D World Map with Scrolling Viewport & GTA Radar */}
+        {/* VIEW 1: Sprawling 2D World Map with Scrolling Viewport & Tactical Radar */}
         {viewMode === "world" ? (
           <div className="w-full flex justify-center animate-in fade-in duration-300">
             <WorldMap

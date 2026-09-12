@@ -433,7 +433,7 @@ export default function RealmFullMapModal({
               <h2 className="text-sm sm:text-base font-bold font-title text-amber-300 flex items-center gap-2">
                 <span>REALM OF VALORIA — WORLD MAP</span>
                 <span className="text-[10px] font-pixel px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
-                  GTA V POI RADAR
+                  TACTICAL POI RADAR
                 </span>
               </h2>
               <p className="text-[11px] text-slate-400 font-body">

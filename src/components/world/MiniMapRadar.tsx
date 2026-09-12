@@ -164,7 +164,7 @@ export default function MiniMapRadar({
     ctx.restore();
     ctx.restore();
 
-    // 4. Outer Radar Border (GTA V Style Glowing Cyan Ring)
+    // 4. Outer Radar Border (Tactical Glowing Cyan Ring)
     ctx.strokeStyle = activeWaypoint ? "#F59E0B" : "rgba(6, 182, 212, 0.7)";
     ctx.lineWidth = 3;
     ctx.beginPath();
@@ -211,7 +211,7 @@ export default function MiniMapRadar({
         )}
       </div>
 
-      {/* GTA V Style Map Launcher Button */}
+      {/* World Map Launcher Button */}
       {onOpenFullMap && (
         <button
           onClick={onOpenFullMap}

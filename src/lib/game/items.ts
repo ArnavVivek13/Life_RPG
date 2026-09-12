@@ -32,7 +32,7 @@ export const DEFAULT_SHOP_ITEMS: ShopItem[] = [
     type: "theme",
     cost: 250,
     asset_key: "theme-autumn",
-    description: "Warm Johto-inspired autumn foliage, golden pathways, and russet-tile roofs.",
+    description: "Warm golden autumn foliage, amber pathways, and russet-tile roofs.",
   },
   {
     id: "a5555555-5555-5555-5555-555555555555",
@@ -142,7 +142,7 @@ export const ITEM_PERKS: Record<string, ItemPerk> = {
   // ── THEMES ──
   "theme-default": {
     badgeLabel: "Classic Theme",
-    effectDescription: "Applies the classic cozy daylight Kanto Day theme to the world and sprite.",
+    effectDescription: "Applies the classic cozy daylight Verdant Day theme to the world and sprite.",
   },
   "theme-cyberpunk": {
     badgeLabel: "Neon Byte Theme",
@@ -154,7 +154,7 @@ export const ITEM_PERKS: Record<string, ItemPerk> = {
   },
   "theme-autumn": {
     badgeLabel: "Autumn Theme",
-    effectDescription: "Applies the warm Johto golden autumn theme to the world and sprite.",
+    effectDescription: "Applies the warm golden autumn theme to the world and sprite.",
   },
   "theme-lavender": {
     badgeLabel: "Lavender Theme",

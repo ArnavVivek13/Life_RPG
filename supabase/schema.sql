@@ -339,7 +339,7 @@ VALUES
   ('a1111111-1111-1111-1111-111111111111', 'Dungeon Tavern Theme', 'theme', 0, 'theme-default', 'The classic cozy medieval tavern where all legendary adventurers gather.'),
   ('a2222222-2222-2222-2222-222222222222', 'Cyberpunk Neon Theme', 'theme', 300, 'theme-cyberpunk', 'Sleek neon grid theme from the neon underworld of 2099.'),
   ('a3333333-3333-3333-3333-333333333333', 'Emerald Forest Sanctuary', 'theme', 250, 'theme-emerald', 'Deep twilight emerald forest canopy with mystical teal waters and glowing night flora.'),
-  ('a4444444-4444-4444-4444-444444444444', 'Golden Autumn Citadel', 'theme', 250, 'theme-autumn', 'Warm Johto-inspired autumn foliage, golden pathways, and russet-tile roofs.'),
+  ('a4444444-4444-4444-4444-444444444444', 'Golden Autumn Citadel', 'theme', 250, 'theme-autumn', 'Warm golden autumn foliage, golden pathways, and russet-tile roofs.'),
   ('a5555555-5555-5555-5555-555555555555', 'Lavender Spirit Realm', 'theme', 280, 'theme-lavender', 'An ethereal twilight realm of soft violet paths, haunted blossoms, and spiritual mist.'),
   ('b1111111-1111-1111-1111-111111111111', 'Mage Hood', 'avatar_item', 150, 'gear-mage-hood', 'A mysterious hood woven from enchanted starlight silk.'),
   ('b2222222-2222-2222-2222-222222222222', 'Golden Crown', 'avatar_item', 500, 'gear-golden-crown', 'Forged from pure aurum for true champions of discipline.'),
