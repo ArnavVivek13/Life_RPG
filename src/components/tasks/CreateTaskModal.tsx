@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { AttributeName } from "@/types/database.types";
 import { createTaskAction } from "@/app/actions/game";
-import { X, Sparkles, AlertCircle, ShieldAlert, CheckCircle2 } from "lucide-react";
+import { X, Sparkles, ShieldAlert, CheckCircle2 } from "lucide-react";
 
 interface CreateTaskModalProps {
   isOpen: boolean;
@@ -31,6 +31,22 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated }: Crea
   const [aiSuggestionMessage, setAiSuggestionMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    },
+    [onClose]
+  );
+
+  useEffect(() => {
+    if (isOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+      return () => window.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [isOpen, handleKeyDown]);
 
   if (!isOpen) return null;
 
@@ -110,18 +126,23 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated }: Crea
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150"
+    >
       <div className="max-w-lg w-full pixel-box p-6 rounded-xl bg-slate-900 border-2 border-slate-700 shadow-2xl space-y-4">
         
         {/* Header */}
         <div className="flex items-center justify-between pb-2 border-b border-slate-800">
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-rpg-gold" />
-            <h2 className="text-lg font-bold font-title text-rpg-goldLight">Forge New Quest</h2>
+            <h2 id="modal-title" className="text-lg font-bold font-title text-rpg-goldLight">Forge New Quest</h2>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
+            className="p-1 rounded text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors focus:ring-2 focus:ring-amber-400 focus:outline-none"
             aria-label="Close modal"
           >
             <X className="w-5 h-5" />
@@ -130,7 +151,7 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated }: Crea
 
         {/* Error / Gibberish Notice */}
         {error && (
-          <div className="p-3 rounded bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center gap-2">
+          <div role="alert" className="p-3 rounded bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center gap-2">
             <ShieldAlert className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
@@ -154,11 +175,12 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated }: Crea
             <input
               type="text"
               required
+              autoFocus
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               onBlur={handleTitleBlur}
               placeholder="e.g. Read 20 pages of Algorithms, Go for 5km run"
-              className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-rpg-gold"
+              className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-rpg-gold focus:ring-1 focus:ring-rpg-gold"
             />
             {isClassifying && (
               <span className="text-[10px] text-rpg-gold animate-pulse mt-1 inline-block">
@@ -177,7 +199,7 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated }: Crea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Add key milestones or notes for this quest..."
-              className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-rpg-gold"
+              className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-rpg-gold focus:ring-1 focus:ring-rpg-gold"
             />
           </div>
 
@@ -192,7 +214,7 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated }: Crea
                   type="button"
                   key={cat.name}
                   onClick={() => setCategory(cat.name)}
-                  className={`p-2 rounded-lg text-xs font-semibold border flex items-center justify-between transition-all ${
+                  className={`p-2 rounded-lg text-xs font-semibold border flex items-center justify-between transition-all focus:outline-none focus:ring-2 focus:ring-amber-400 ${
                     category === cat.name
                       ? `${cat.bg} border-current ${cat.color} ring-1 ring-current`
                       : "bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700"
@@ -216,7 +238,7 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated }: Crea
                   setDifficulty(diff);
                   setBaseXp(diff === "easy" ? 10 : diff === "medium" ? 20 : 35);
                 }}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-rpg-gold"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-rpg-gold focus:ring-1 focus:ring-rpg-gold"
               >
                 <option value="easy">Easy (10 XP)</option>
                 <option value="medium">Medium (20 XP)</option>
@@ -235,7 +257,7 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated }: Crea
                 step="5"
                 value={baseXp}
                 onChange={(e) => setBaseXp(Number(e.target.value))}
-                className="w-full mt-2 accent-amber-500 cursor-pointer"
+                className="w-full mt-2 accent-amber-500 cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-400 rounded"
               />
             </div>
           </div>
@@ -249,7 +271,7 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated }: Crea
               type="datetime-local"
               value={deadline}
               onChange={(e) => setDeadline(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-rpg-gold [color-scheme:dark]"
+              className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-rpg-gold focus:ring-1 focus:ring-rpg-gold [color-scheme:dark]"
             />
             <span className="text-[10px] text-slate-500 mt-1 inline-block">
               Finishing before deadline awards up to 1.5x speed multiplier XP bonus.
@@ -261,14 +283,14 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated }: Crea
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
+              className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="px-5 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-bold font-pixel uppercase tracking-wider pixel-btn disabled:opacity-50"
+              className="px-5 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-bold font-pixel uppercase tracking-wider pixel-btn disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-amber-400"
             >
               {submitting ? "Forging..." : "Forge Quest"}
             </button>

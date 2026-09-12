@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import OfflineBanner from "@/components/ui/OfflineBanner";
 
 export const metadata: Metadata = {
   title: "Life RPG — Gamified Real-World Progression",
@@ -16,7 +17,9 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased selection:bg-rpg-gold selection:text-black">
         {children}
+        <OfflineBanner />
       </body>
     </html>
   );
 }
+
