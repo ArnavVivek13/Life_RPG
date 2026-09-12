@@ -1,26 +1,48 @@
-import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { type NextRequest, NextResponse } from "next/server";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
-export async function GET(request: Request) {
-  const requestUrl = new URL(request.url);
-  const { searchParams } = requestUrl;
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/dashboard";
 
-  // Resolve the true origin: Vercel sets x-forwarded-host in production
+  // Resolve true origin (handling Vercel proxy headers)
   const forwardedHost = request.headers.get("x-forwarded-host");
   const isLocalEnv = process.env.NODE_ENV === "development";
   const origin = isLocalEnv
-    ? requestUrl.origin
+    ? request.nextUrl.origin
     : forwardedHost
     ? `https://${forwardedHost}`
-    : requestUrl.origin;
+    : request.nextUrl.origin;
+
+  // Pre-instantiate the redirect response so cookies can be stamped directly onto it
+  const response = NextResponse.redirect(`${origin}${next}`);
 
   if (code) {
-    const supabase = createClient();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return request.cookies.get(name)?.value;
+          },
+          set(name: string, value: string, options: CookieOptions) {
+            request.cookies.set({ name, value, ...options });
+            response.cookies.set({ name, value, ...options });
+          },
+          remove(name: string, options: CookieOptions) {
+            request.cookies.set({ name, value: "", ...options });
+            response.cookies.set({ name, value: "", ...options });
+          },
+        },
+      }
+    );
+
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      // Return response with Set-Cookie headers intact
+      return response;
     } else {
       console.error("[auth/callback] exchangeCodeForSession error:", error.message);
     }
@@ -29,3 +51,4 @@ export async function GET(request: Request) {
   // Return the user to an error page or login with instructions
   return NextResponse.redirect(`${origin}/login?error=Could not authenticate`);
 }
+
