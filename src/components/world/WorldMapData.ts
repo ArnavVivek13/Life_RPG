@@ -159,11 +159,11 @@ export const BUILDINGS: Building[] = [
     subtitle: "Notice board, active quests & AI quest forge",
     type: "guild",
     x: 820,
-    y: 780,
+    y: 720,
     width: 320,
-    height: 220,
+    height: 200,
     doorX: 980,
-    doorY: 1000,
+    doorY: 920,
     color: "#1E293B",
     roofColor: "#1E3A8A",
     trimColor: "#FCD34D",
@@ -176,18 +176,19 @@ export const BUILDINGS: Building[] = [
     district: "Central Market",
     subtitle: "Trade gold for themes, avatar cosmetics & badges",
     type: "shop",
-    x: 1280,
-    y: 800,
+    x: 1300,
+    y: 740,
     width: 260,
     height: 190,
-    doorX: 1410,
-    doorY: 990,
+    doorX: 1430,
+    doorY: 930,
     color: "#1E293B",
     roofColor: "#065F46",
     trimColor: "#34D399",
     signIcon: "🛒",
     blipColor: "#10B981",
   },
+
   {
     id: "dojo",
     name: "Iron Colosseum Arena",
@@ -302,7 +303,7 @@ export const OBSTACLES = [
   })),
 
   // Central Grand Fountain
-  { x: 930, y: 1100, width: 100, height: 100 },
+  { x: 930, y: 1200, width: 100, height: 100 },
 
   // Garden Fences in Hero's Quarter
   { x: 100, y: 440, width: 340, height: 16 },
