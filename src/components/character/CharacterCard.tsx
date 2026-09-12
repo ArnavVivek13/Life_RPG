@@ -1,117 +1,142 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { Profile, UserInventory } from "@/types/database.types";
 import { calculateLevelProgression } from "@/lib/game/math";
-import { Flame, Coins, Shield, Sparkles, Crown } from "lucide-react";
+import { drawPlayerSprite, getPalette } from "@/components/world/SpriteEngine";
+import { Flame, Coins, Shield, Sparkles, Crown, Award, Sword, Heart } from "lucide-react";
 
 interface CharacterCardProps {
   profile: Profile;
   inventory?: UserInventory[];
 }
 
+function getHeroTitle(lvl: number): string {
+  if (lvl >= 15) return "Grand Master of Valoria";
+  if (lvl >= 10) return "Paladin of Discipline";
+  if (lvl >= 6) return "Knight of the Realm";
+  if (lvl >= 3) return "Valiant Adventurer";
+  return "Apprentice Quester";
+}
+
 export default function CharacterCard({ profile, inventory = [] }: CharacterCardProps) {
   const { level, currentLevelXp, xpForNextLevel, progressPercent } = calculateLevelProgression(profile.total_xp);
+  const avatarCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   // Check equipped cosmetic items
   const equippedCrown = inventory.some((i) => i.equipped && i.item?.asset_key === "gear-golden-crown");
   const equippedHood = inventory.some((i) => i.equipped && i.item?.asset_key === "gear-mage-hood");
+  const equippedSword = inventory.some((i) => i.equipped && i.item?.asset_key === "gear-dragon-blade");
+  const equippedShield = inventory.some((i) => i.equipped && i.item?.asset_key === "gear-knight-shield");
+  const equippedCape = inventory.some((i) => i.equipped && i.item?.asset_key === "gear-celestial-cape");
+  const equippedCowl = inventory.some((i) => i.equipped && i.item?.asset_key === "gear-ranger-cowl");
+
+  useEffect(() => {
+    const canvas = avatarCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, 72, 72);
+    ctx.save();
+    ctx.scale(2.1, 2.1);
+    drawPlayerSprite({
+      ctx,
+      x: 1,
+      y: 1,
+      direction: "down",
+      isMoving: false,
+      frame: 0,
+      hasCrown: equippedCrown,
+      hasHood: equippedHood,
+      hasSword: equippedSword,
+      hasShield: equippedShield,
+      hasCape: equippedCape,
+      hasCowl: equippedCowl,
+      palette: getPalette(profile.current_theme),
+    });
+    ctx.restore();
+  }, [equippedCrown, equippedHood, equippedSword, equippedShield, equippedCape, equippedCowl, profile.current_theme]);
+
+  const heroTitle = getHeroTitle(level);
 
   return (
-    <div className="p-5 rounded-2xl pixel-box bg-slate-900/90 border-2 border-slate-700 shadow-xl relative overflow-hidden space-y-5">
+    <div className="p-5 sm:p-6 rounded-2xl pixel-box bg-gradient-to-b from-slate-900/95 via-slate-900/90 to-slate-950 border-2 border-amber-500/30 shadow-2xl relative overflow-hidden space-y-5">
       
-      {/* Background ambient lighting */}
-      <div className="absolute -top-10 -right-10 w-36 h-36 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
+      {/* Subtle fantasy background aura */}
+      <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-500/5 rounded-full blur-2xl pointer-events-none" />
 
-      {/* Top Bar: Hero Info & Sprite */}
-      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+      {/* Top Bar: Hero Info & Live Sprite */}
+      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
         
-        {/* Animated 16-bit Sprite Container */}
+        {/* Animated GBA Sprite Canvas Frame */}
         <div className="relative group shrink-0">
-          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-b from-slate-800 to-slate-950 border-2 border-slate-600 flex items-center justify-center relative overflow-hidden shadow-inner">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-b from-slate-800 to-slate-950 border-2 border-amber-400/60 flex items-center justify-center relative overflow-hidden shadow-[inset_0_2px_8px_rgba(0,0,0,0.8)]">
             
-            {/* Equipped Crown Accessory */}
-            {equippedCrown && (
-              <Crown className="w-6 h-6 text-amber-300 absolute top-1 left-1/2 -translate-x-1/2 drop-shadow-[0_0_8px_rgba(252,211,77,0.8)] z-20 animate-bounce" />
-            )}
-
-            {/* Equipped Mage Hood Glow */}
-            {equippedHood && (
-              <div className="absolute inset-0 bg-purple-500/20 border-2 border-purple-400/40 rounded-2xl z-10 pointer-events-none" />
-            )}
-
-            {/* Pixel Character Canvas / SVG Sprite */}
-            <div className="flex flex-col items-center justify-center animate-pulse duration-1000">
-              <svg width="48" height="48" viewBox="0 0 16 16" className="w-12 h-12 image-pixelated">
-                {/* Hair/Helmet */}
-                <rect x="5" y="2" width="6" height="3" fill="#D97706" />
-                {/* Face */}
-                <rect x="5" y="5" width="6" height="4" fill="#FCD34D" />
-                {/* Eyes */}
-                <rect x="6" y="6" width="1" height="1" fill="#0F172A" />
-                <rect x="9" y="6" width="1" height="1" fill="#0F172A" />
-                {/* Armor/Tunic */}
-                <rect x="4" y="9" width="8" height="5" fill="#3B82F6" />
-                {/* Belt & Buckle */}
-                <rect x="4" y="11" width="8" height="1" fill="#78350F" />
-                <rect x="7" y="11" width="2" height="1" fill="#F59E0B" />
-                {/* Boots */}
-                <rect x="5" y="14" width="2" height="2" fill="#1E293B" />
-                <rect x="9" y="14" width="2" height="2" fill="#1E293B" />
-              </svg>
-            </div>
+            {/* Live GBA Pixel Sprite Canvas */}
+            <canvas
+              ref={avatarCanvasRef}
+              width={72}
+              height={72}
+              className="w-16 h-16 image-pixelated animate-pulse duration-1000"
+              style={{ imageRendering: "pixelated" }}
+            />
 
             {/* Level Tag on Sprite */}
-            <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-amber-500 text-slate-950 font-pixel text-[8px] font-bold">
-              L{level}
+            <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-amber-400 text-slate-950 font-pixel text-[8px] font-bold shadow">
+              LV.{level}
             </div>
           </div>
         </div>
 
         {/* Hero Details */}
-        <div className="flex-1 text-center sm:text-left space-y-1.5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="flex-1 text-center sm:text-left space-y-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
             <div>
-              <h2 className="text-lg font-bold font-title text-slate-100 flex items-center justify-center sm:justify-start gap-2">
-                <span>{profile.username || "Valiant Adventurer"}</span>
-                <span className="text-[10px] font-pixel px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-400">
-                  Novice Champion
+              <div className="flex items-center justify-center sm:justify-start gap-2">
+                <h2 className="text-lg sm:text-xl font-bold font-title text-amber-200">
+                  {profile.username || "Hero of Valoria"}
+                </h2>
+                <span className="text-[10px] font-pixel px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/40 text-amber-300">
+                  {heroTitle}
                 </span>
-              </h2>
-              <p className="text-xs text-slate-400 font-body">
-                Mastering the trials of everyday discipline.
+              </div>
+              <p className="text-xs text-slate-400 font-body mt-0.5">
+                Forging destiny through daily discipline and heroic consistency.
               </p>
             </div>
 
             {/* Currency Badges */}
-            <div className="flex items-center justify-center sm:justify-end gap-2">
+            <div className="flex items-center justify-center sm:justify-end gap-2.5">
               
               {/* Gold Counter */}
-              <div className="px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center gap-1.5 shadow-sm">
-                <Coins className="w-3.5 h-3.5 text-rpg-gold" />
-                <span className="text-xs font-bold text-rpg-goldLight font-pixel">
+              <div className="px-3.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/40 flex items-center gap-1.5 shadow-sm">
+                <Coins className="w-4 h-4 text-amber-400" />
+                <span className="text-xs font-bold text-amber-300 font-pixel">
                   {profile.gold} G
                 </span>
               </div>
 
               {/* Streak Flame */}
-              <div className="px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center gap-1.5 shadow-sm">
-                <Flame className="w-3.5 h-3.5 text-red-400 fill-red-500/30 animate-pulse" />
+              <div className="px-3.5 py-1.5 rounded-xl bg-red-500/10 border border-red-500/40 flex items-center gap-1.5 shadow-sm">
+                <Flame className="w-4 h-4 text-red-400 fill-red-500/30 animate-pulse" />
                 <span className="text-xs font-bold text-red-300 font-pixel">
-                  {profile.streak_count}d
+                  {profile.streak_count}d Streak
                 </span>
               </div>
 
             </div>
           </div>
 
-          {/* XP Progression Bar (Non-Linear) */}
-          <div className="space-y-1 pt-2">
+          {/* XP Progression Bar */}
+          <div className="space-y-1.5 pt-1">
             <div className="flex items-center justify-between text-[11px] font-semibold">
-              <span className="text-purple-300 flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-purple-400" />
-                <span>Level {level} Progress</span>
+              <span className="text-purple-300 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                <span className="font-title">Level {level} Experience</span>
               </span>
-              <span className="text-slate-400 font-pixel text-[9px]">
+              <span className="text-amber-300 font-pixel text-[9px]">
                 {currentLevelXp} / {xpForNextLevel} XP ({progressPercent}%)
               </span>
             </div>
@@ -124,9 +149,9 @@ export default function CharacterCard({ profile, inventory = [] }: CharacterCard
               />
             </div>
             
-            <div className="flex items-center justify-between text-[10px] text-slate-500">
-              <span>Total Realm XP: {profile.total_xp}</span>
-              <span>Next Level: {xpForNextLevel - currentLevelXp} XP needed</span>
+            <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono">
+              <span>Lifetime Realm XP: {profile.total_xp.toLocaleString()}</span>
+              <span>Next Level: {xpForNextLevel - currentLevelXp} XP remaining</span>
             </div>
           </div>
 

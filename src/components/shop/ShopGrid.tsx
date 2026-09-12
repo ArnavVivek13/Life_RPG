@@ -3,7 +3,24 @@
 import { useState } from "react";
 import { ShopItem, UserInventory } from "@/types/database.types";
 import { buyShopItemAction } from "@/app/actions/game";
-import { ShoppingBag, Sparkles, Check, Crown, Shield, Shirt, Award } from "lucide-react";
+import {
+  ShoppingBag,
+  Sparkles,
+  Check,
+  Crown,
+  Shield,
+  Shirt,
+  Award,
+  Sword,
+  ShieldAlert,
+  Feather,
+  Trees,
+  Sun,
+  Ghost,
+  Flame,
+  Trophy,
+  BookOpen
+} from "lucide-react";
 
 interface ShopGridProps {
   shopItems: ShopItem[];
@@ -15,9 +32,19 @@ interface ShopGridProps {
 const ITEM_ICONS: Record<string, any> = {
   "gear-golden-crown": Crown,
   "gear-mage-hood": Shield,
-  "theme-cyberpunk": Sparkles,
+  "gear-dragon-blade": Sword,
+  "gear-knight-shield": ShieldAlert,
+  "gear-ranger-cowl": Feather,
+  "gear-celestial-cape": Sparkles,
   "theme-default": Shirt,
+  "theme-cyberpunk": Sparkles,
+  "theme-emerald": Trees,
+  "theme-autumn": Sun,
+  "theme-lavender": Ghost,
   "badge-early-quester": Award,
+  "badge-iron-will": Flame,
+  "badge-dragon-slayer": Trophy,
+  "badge-grandmaster": BookOpen,
 };
 
 export default function ShopGrid({ shopItems, inventory, userGold, onItemPurchased }: ShopGridProps) {

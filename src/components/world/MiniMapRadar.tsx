@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { WORLD_WIDTH, WORLD_HEIGHT, BUILDINGS, EASTER_EGGS, Building } from "./WorldMapData";
+import { WORLD_WIDTH, WORLD_HEIGHT, BUILDINGS, EASTER_EGGS, DISTRICT_ZONES, Building } from "./WorldMapData";
 import { Direction } from "./SpriteEngine";
 import { Navigation, MapPin, X } from "lucide-react";
 
@@ -12,6 +12,7 @@ interface MiniMapRadarProps {
   districtName: string;
   activeWaypoint: Building | null;
   onSelectWaypoint: (building: Building | null) => void;
+  onOpenFullMap?: () => void;
 }
 
 export default function MiniMapRadar({
@@ -21,6 +22,7 @@ export default function MiniMapRadar({
   districtName,
   activeWaypoint,
   onSelectWaypoint,
+  onOpenFullMap,
 }: MiniMapRadarProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -63,8 +65,21 @@ export default function MiniMapRadar({
     ctx.stroke();
 
     // 2. Coordinate Transformation (Radar Centers on Player)
-    // Radar Zoom Scale
-    const scale = 0.08;
+    // Radar Zoom Scale — adjusted for larger 3200x2400 world
+    const scale = 0.055;
+
+    // Draw district zones on radar
+    DISTRICT_ZONES.forEach((dz) => {
+      const zx = radius + (dz.x + dz.width / 2 - playerX) * scale;
+      const zy = radius + (dz.y + dz.height / 2 - playerY) * scale;
+      const zw = dz.width * scale;
+      const zh = dz.height * scale;
+      ctx.fillStyle = dz.accentColor + "18";
+      ctx.strokeStyle = dz.accentColor + "40";
+      ctx.lineWidth = 1;
+      ctx.fillRect(zx - zw / 2, zy - zh / 2, zw, zh);
+      ctx.strokeRect(zx - zw / 2, zy - zh / 2, zw, zh);
+    });
 
     // Draw Buildings on Radar
     BUILDINGS.forEach((b) => {
@@ -160,13 +175,17 @@ export default function MiniMapRadar({
   return (
     <div className="relative flex flex-col items-center select-none">
       
-      {/* Radar Container */}
-      <div className="relative group">
+      {/* Radar Container (Click to open full map) */}
+      <div
+        onClick={onOpenFullMap}
+        className="relative group cursor-pointer transition-transform hover:scale-105"
+        title="Click to Open Full Realm Map (M)"
+      >
         <canvas
           ref={canvasRef}
           width={150}
           height={150}
-          className="w-28 h-28 sm:w-36 sm:h-36 rounded-full shadow-[0_0_20px_rgba(6,182,212,0.3)] backdrop-blur-md"
+          className="w-28 h-28 sm:w-36 sm:h-36 rounded-full shadow-[0_0_20px_rgba(6,182,212,0.3)] backdrop-blur-md border-2 border-slate-700/60"
         />
 
         {/* GPS Waypoint Tag Bar */}
@@ -175,37 +194,34 @@ export default function MiniMapRadar({
             <MapPin className="w-3 h-3 text-amber-400 animate-bounce" />
             <span>{activeWaypoint.name.split(" ")[0]}: {distanceToWaypoint}m</span>
             <button
-              onClick={() => onSelectWaypoint(null)}
-              className="p-0.5 hover:text-white rounded"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelectWaypoint(null);
+              }}
+              className="p-0.5 hover:text-white rounded ml-0.5"
               title="Clear Waypoint"
             >
               <X className="w-3 h-3" />
             </button>
           </div>
         ) : (
-          <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-0.5 rounded-full bg-slate-900/90 border border-cyan-500/40 text-[9px] font-pixel text-cyan-300">
+          <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap px-2.5 py-0.5 rounded-full bg-slate-900/90 border border-cyan-500/40 text-[9px] font-pixel text-cyan-300 shadow">
             {districtName.split(" ")[0]}
           </div>
         )}
       </div>
 
-      {/* Quick GPS Destination Picker Drawer */}
-      <div className="mt-8 flex items-center gap-1 bg-slate-900/90 p-1 rounded-xl border border-slate-700 shadow-xl overflow-x-auto max-w-[280px]">
-        {BUILDINGS.map((b) => (
-          <button
-            key={b.id}
-            onClick={() => onSelectWaypoint(activeWaypoint?.id === b.id ? null : b)}
-            className={`p-1.5 rounded-lg text-xs transition-all ${
-              activeWaypoint?.id === b.id
-                ? "bg-amber-500 text-slate-950 scale-110 shadow-glowGold"
-                : "hover:bg-slate-800 text-slate-300"
-            }`}
-            title={`Set GPS Waypoint: ${b.name}`}
-          >
-            <span>{b.signIcon}</span>
-          </button>
-        ))}
-      </div>
+      {/* GTA V Style Map Launcher Button */}
+      {onOpenFullMap && (
+        <button
+          onClick={onOpenFullMap}
+          className="mt-8 px-3 py-1.5 rounded-xl bg-slate-900/95 hover:bg-slate-800 border border-slate-700 hover:border-amber-400/60 text-slate-200 hover:text-amber-300 text-[10px] font-pixel shadow-xl flex items-center gap-1.5 transition-all group"
+        >
+          <span className="text-amber-400 group-hover:scale-110 transition-transform">🗺️</span>
+          <span>Open Map</span>
+          <kbd className="px-1 py-0.2 bg-slate-800 rounded text-[8px] text-slate-400 border border-slate-700">M</kbd>
+        </button>
+      )}
 
     </div>
   );

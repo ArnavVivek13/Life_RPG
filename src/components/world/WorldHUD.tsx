@@ -11,7 +11,8 @@ import {
   Compass, 
   LogOut,
   ShoppingBag,
-  MapPin
+  MapPin,
+  ShieldAlert
 } from "lucide-react";
 
 interface WorldHUDProps {
@@ -31,42 +32,38 @@ export default function WorldHUD({
   profile,
   viewMode,
   onToggleViewMode,
-  nearbyBuilding,
-  nearbyEasterEgg,
   currentDistrict,
-  activeWaypoint,
-  onInteract,
   onOpenShop,
   onSignOut,
 }: WorldHUDProps) {
   const { level, currentLevelXp, xpForNextLevel, progressPercent } = calculateLevelProgression(profile.total_xp);
 
   return (
-    <div className="w-full space-y-2 select-none">
+    <div className="w-full select-none">
       
-      {/* Top GBA HUD Bar */}
-      <div className="p-3 sm:p-4 rounded-2xl pixel-box bg-slate-900/90 border-2 border-slate-700 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-3">
+      {/* Top RPG Status Bar */}
+      <div className="p-3 sm:p-4 rounded-2xl pixel-box bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border-2 border-amber-500/40 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-3">
         
-        {/* Left: Player Profile & Level */}
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 border-2 border-amber-300 flex items-center justify-center font-bold text-slate-950 font-pixel text-xs shadow-md shrink-0">
+        {/* Left: Player Profile & Level Crest */}
+        <div className="flex items-center gap-3.5 w-full md:w-auto">
+          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 border-2 border-amber-200 flex items-center justify-center font-bold text-slate-950 font-pixel text-xs shadow-glowGold shrink-0">
             L{level}
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-xs sm:text-sm font-title text-slate-100">
+              <span className="font-bold text-sm font-title text-amber-200">
                 {profile.username || "Hero of Valoria"}
               </span>
-              <span className="text-[9px] font-pixel px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
-                {profile.current_theme === "cyberpunk" ? "CYBERPUNK" : "MEDIEVAL"}
+              <span className="text-[9px] font-pixel px-2 py-0.5 rounded-full bg-slate-800/90 text-amber-400 border border-amber-500/30">
+                RANK {Math.min(10, Math.floor(level / 2) + 1)}
               </span>
             </div>
             
             {/* XP Bar */}
-            <div className="flex items-center gap-2 mt-1">
-              <div className="w-28 sm:w-36 h-2 bg-slate-950 rounded-full border border-slate-800 overflow-hidden">
+            <div className="flex items-center gap-2.5 mt-1.5">
+              <div className="w-32 sm:w-44 h-2.5 bg-slate-950 rounded-full border border-slate-700 overflow-hidden p-0.5">
                 <div
-                  className="h-full bg-gradient-to-r from-purple-500 to-amber-400 transition-all duration-300 shadow-glowXp"
+                  className="h-full rounded-full bg-gradient-to-r from-purple-600 via-purple-500 to-amber-400 transition-all duration-300 shadow-glowXp"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
@@ -79,32 +76,32 @@ export default function WorldHUD({
 
         {/* Center: Currencies & Current District */}
         <div className="flex items-center gap-3">
-          <div className="px-3 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center gap-1.5">
-            <Coins className="w-3.5 h-3.5 text-amber-400" />
+          <div className="px-3.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/40 flex items-center gap-1.5 shadow-sm">
+            <Coins className="w-4 h-4 text-amber-400" />
             <span className="text-xs font-bold text-amber-300 font-pixel">
               {profile.gold} G
             </span>
           </div>
 
-          <div className="px-3 py-1 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center gap-1.5">
-            <Flame className="w-3.5 h-3.5 text-red-400 fill-red-500/30 animate-pulse" />
+          <div className="px-3.5 py-1.5 rounded-xl bg-red-500/10 border border-red-500/40 flex items-center gap-1.5 shadow-sm">
+            <Flame className="w-4 h-4 text-red-400 fill-red-500/30 animate-pulse" />
             <span className="text-xs font-bold text-red-300 font-pixel">
               {profile.streak_count}d Streak
             </span>
           </div>
 
           {/* District Tag */}
-          <div className="hidden lg:flex items-center gap-1 px-3 py-1 rounded-lg bg-slate-800/80 border border-slate-700 text-xs font-semibold text-cyan-300">
+          <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700 text-xs font-semibold text-cyan-300 shadow">
             <MapPin className="w-3.5 h-3.5 text-cyan-400" />
-            <span>{currentDistrict.name}</span>
+            <span>{currentDistrict.name.split("&")[0].trim()}</span>
           </div>
         </div>
 
         {/* Right: View Mode Toggle & Navigation */}
-        <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+        <div className="flex items-center gap-2.5 w-full md:w-auto justify-end">
           <button
             onClick={onOpenShop}
-            className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-400 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+            className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-amber-400/50 text-amber-300 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
           >
             <ShoppingBag className="w-3.5 h-3.5" />
             <span>Shop</span>
@@ -112,7 +109,7 @@ export default function WorldHUD({
 
           <button
             onClick={onToggleViewMode}
-            className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs uppercase tracking-wider font-pixel pixel-btn flex items-center gap-1.5 transition-transform"
+            className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs uppercase tracking-wider font-pixel pixel-btn flex items-center gap-1.5 transition-transform shadow-glowGold"
           >
             {viewMode === "world" ? (
               <>
@@ -122,14 +119,14 @@ export default function WorldHUD({
             ) : (
               <>
                 <Compass className="w-3.5 h-3.5" />
-                <span>City Map</span>
+                <span>Overworld</span>
               </>
             )}
           </button>
 
           <button
             onClick={onSignOut}
-            className="p-1.5 rounded-lg bg-red-950/60 hover:bg-red-900/60 border border-red-800/40 text-red-300 transition-colors"
+            className="p-2 rounded-xl bg-red-950/60 hover:bg-red-900/60 border border-red-800/40 text-red-300 transition-colors"
             title="Leave Realm"
           >
             <LogOut className="w-4 h-4" />
@@ -137,23 +134,6 @@ export default function WorldHUD({
         </div>
 
       </div>
-
-      {/* Proximity Interaction Prompt Banner for Buildings & Easter Eggs */}
-      {viewMode === "world" && (nearbyBuilding || nearbyEasterEgg) && (
-        <div className="p-2.5 rounded-xl pixel-box bg-gradient-to-r from-amber-950/90 via-slate-900 to-amber-950/90 border-2 border-amber-400/80 text-center animate-bounce shadow-glowGold flex items-center justify-center gap-3">
-          <Sparkles className="w-4 h-4 text-amber-400 animate-spin" />
-          <span className="text-xs font-pixel text-amber-200">
-            Press <kbd className="px-1.5 py-0.5 rounded bg-amber-400 text-slate-950 font-bold">Space</kbd> or <kbd className="px-1.5 py-0.5 rounded bg-amber-400 text-slate-950 font-bold">E</kbd> to {nearbyBuilding ? `enter ${nearbyBuilding.name}` : `interact with ${nearbyEasterEgg.name}`}
-          </span>
-          <button
-            onClick={onInteract}
-            className="px-3 py-1 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[10px] font-pixel uppercase tracking-wider"
-          >
-            Interact
-          </button>
-        </div>
-      )}
-
     </div>
   );
 }

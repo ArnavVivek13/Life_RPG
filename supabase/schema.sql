@@ -343,7 +343,17 @@ INSERT INTO public.shop_items (id, name, type, cost, asset_key, description)
 VALUES
   ('a1111111-1111-1111-1111-111111111111', 'Dungeon Tavern Theme', 'theme', 0, 'theme-default', 'The classic cozy medieval tavern where all legendary adventurers gather.'),
   ('a2222222-2222-2222-2222-222222222222', 'Cyberpunk Neon Theme', 'theme', 300, 'theme-cyberpunk', 'Sleek neon grid theme from the neon underworld of 2099.'),
+  ('a3333333-3333-3333-3333-333333333333', 'Emerald Forest Sanctuary', 'theme', 250, 'theme-emerald', 'Deep twilight emerald forest canopy with mystical teal waters and glowing night flora.'),
+  ('a4444444-4444-4444-4444-444444444444', 'Golden Autumn Citadel', 'theme', 250, 'theme-autumn', 'Warm Johto-inspired autumn foliage, golden pathways, and russet-tile roofs.'),
+  ('a5555555-5555-5555-5555-555555555555', 'Lavender Spirit Realm', 'theme', 280, 'theme-lavender', 'An ethereal twilight realm of soft violet paths, haunted blossoms, and spiritual mist.'),
   ('b1111111-1111-1111-1111-111111111111', 'Mage Hood', 'avatar_item', 150, 'gear-mage-hood', 'A mysterious hood woven from enchanted starlight silk.'),
   ('b2222222-2222-2222-2222-222222222222', 'Golden Crown', 'avatar_item', 500, 'gear-golden-crown', 'Forged from pure aurum for true champions of discipline.'),
-  ('c1111111-1111-1111-1111-111111111111', 'Early Quester Badge', 'badge', 50, 'badge-early-quester', 'Conferred upon the brave souls who embark on their life journey.')
+  ('b3333333-3333-3333-3333-333333333333', 'Dragonfang Broadsword', 'avatar_item', 350, 'gear-dragon-blade', 'A legendary blade forged in dragon flame, sheathed at your hip ready for battle.'),
+  ('b4444444-4444-4444-4444-444444444444', 'Lionheart Aegis Shield', 'avatar_item', 275, 'gear-knight-shield', 'An ornate royal heater shield bearing the golden lion crest of the high kingdom.'),
+  ('b5555555-5555-5555-5555-555555555555', 'Shadowstalker Ranger Cowl', 'avatar_item', 220, 'gear-ranger-cowl', 'A stealthy forest ranger cowl fitted with an emerald hawk plume feather.'),
+  ('b6666666-6666-6666-6666-666666666666', 'Celestial Archmage Cape', 'avatar_item', 400, 'gear-celestial-cape', 'A flowing royal midnight-blue cape lined with starlight embroidery and gold trims.'),
+  ('c1111111-1111-1111-1111-111111111111', 'Early Quester Badge', 'badge', 50, 'badge-early-quester', 'Conferred upon the brave souls who embark on their life journey.'),
+  ('c2222222-2222-2222-2222-222222222222', 'Iron Will Discipline Crest', 'badge', 120, 'badge-iron-will', 'Proof of unshakeable mental discipline and consecutive habit completion.'),
+  ('c3333333-3333-3333-3333-333333333333', 'Dragon Slayer Champion Seal', 'badge', 450, 'badge-dragon-slayer', 'The highest medal of honor, awarded only to conquerors of the realm''s fiercest trials.'),
+  ('c4444444-4444-4444-4444-444444444444', 'Grandmaster Scholar Seal', 'badge', 250, 'badge-grandmaster', 'Bestowed upon scholarly adventurers who unlock great wisdom in the arcane library.')
 ON CONFLICT (id) DO NOTHING;

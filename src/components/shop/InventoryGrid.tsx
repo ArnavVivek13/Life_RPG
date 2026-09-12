@@ -3,7 +3,24 @@
 import { useState } from "react";
 import { UserInventory } from "@/types/database.types";
 import { equipItemAction } from "@/app/actions/game";
-import { Crown, Shield, Sparkles, Shirt, Award, Check, PackageOpen } from "lucide-react";
+import {
+  Crown,
+  Shield,
+  Sparkles,
+  Shirt,
+  Award,
+  Check,
+  PackageOpen,
+  Sword,
+  ShieldAlert,
+  Feather,
+  Trees,
+  Sun,
+  Ghost,
+  Flame,
+  Trophy,
+  BookOpen
+} from "lucide-react";
 
 interface InventoryGridProps {
   inventory: UserInventory[];
@@ -13,9 +30,19 @@ interface InventoryGridProps {
 const ITEM_ICONS: Record<string, any> = {
   "gear-golden-crown": Crown,
   "gear-mage-hood": Shield,
-  "theme-cyberpunk": Sparkles,
+  "gear-dragon-blade": Sword,
+  "gear-knight-shield": ShieldAlert,
+  "gear-ranger-cowl": Feather,
+  "gear-celestial-cape": Sparkles,
   "theme-default": Shirt,
+  "theme-cyberpunk": Sparkles,
+  "theme-emerald": Trees,
+  "theme-autumn": Sun,
+  "theme-lavender": Ghost,
   "badge-early-quester": Award,
+  "badge-iron-will": Flame,
+  "badge-dragon-slayer": Trophy,
+  "badge-grandmaster": BookOpen,
 };
 
 export default function InventoryGrid({ inventory, onEquipChanged }: InventoryGridProps) {

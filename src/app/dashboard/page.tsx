@@ -16,7 +16,21 @@ import ShopGrid from "@/components/shop/ShopGrid";
 import InventoryGrid from "@/components/shop/InventoryGrid";
 import LevelUpModal from "@/components/ui/LevelUpModal";
 import confetti from "canvas-confetti";
-import { X, Sparkles, ShoppingBag, Package, Heart, Coins, BookOpen } from "lucide-react";
+import { 
+  X, 
+  Sparkles, 
+  ShoppingBag, 
+  Package, 
+  Heart, 
+  Coins, 
+  BookOpen, 
+  Hammer, 
+  Flame, 
+  ShieldCheck, 
+  Beer, 
+  CheckCircle2, 
+  ShieldAlert 
+} from "lucide-react";
 
 // Mock Fallback Data
 const DEFAULT_PROFILE: Profile = {
@@ -82,6 +96,7 @@ const DEFAULT_TASKS: Task[] = [
 ];
 
 const DEFAULT_SHOP_ITEMS: ShopItem[] = [
+  // ── THEMES ──
   {
     id: "a1111111-1111-1111-1111-111111111111",
     name: "Dungeon Tavern Theme",
@@ -99,6 +114,32 @@ const DEFAULT_SHOP_ITEMS: ShopItem[] = [
     description: "Sleek neon grid theme from the neon underworld of 2099.",
   },
   {
+    id: "a3333333-3333-3333-3333-333333333333",
+    name: "Emerald Forest Sanctuary",
+    type: "theme",
+    cost: 250,
+    asset_key: "theme-emerald",
+    description: "Deep twilight emerald forest canopy with mystical teal waters and glowing night flora.",
+  },
+  {
+    id: "a4444444-4444-4444-4444-444444444444",
+    name: "Golden Autumn Citadel",
+    type: "theme",
+    cost: 250,
+    asset_key: "theme-autumn",
+    description: "Warm Johto-inspired autumn foliage, golden pathways, and russet-tile roofs.",
+  },
+  {
+    id: "a5555555-5555-5555-5555-555555555555",
+    name: "Lavender Spirit Realm",
+    type: "theme",
+    cost: 280,
+    asset_key: "theme-lavender",
+    description: "An ethereal twilight realm of soft violet paths, haunted blossoms, and spiritual mist.",
+  },
+
+  // ── AVATAR GEAR & COSMETICS ──
+  {
     id: "b1111111-1111-1111-1111-111111111111",
     name: "Mage Hood",
     type: "avatar_item",
@@ -115,12 +156,70 @@ const DEFAULT_SHOP_ITEMS: ShopItem[] = [
     description: "Forged from pure aurum for true champions of discipline.",
   },
   {
+    id: "b3333333-3333-3333-3333-333333333333",
+    name: "Dragonfang Broadsword",
+    type: "avatar_item",
+    cost: 350,
+    asset_key: "gear-dragon-blade",
+    description: "A legendary blade forged in dragon flame, sheathed at your hip ready for battle.",
+  },
+  {
+    id: "b4444444-4444-4444-4444-444444444444",
+    name: "Lionheart Aegis Shield",
+    type: "avatar_item",
+    cost: 275,
+    asset_key: "gear-knight-shield",
+    description: "An ornate royal heater shield bearing the golden lion crest of the high kingdom.",
+  },
+  {
+    id: "b5555555-5555-5555-5555-555555555555",
+    name: "Shadowstalker Ranger Cowl",
+    type: "avatar_item",
+    cost: 220,
+    asset_key: "gear-ranger-cowl",
+    description: "A stealthy forest ranger cowl fitted with an emerald hawk plume feather.",
+  },
+  {
+    id: "b6666666-6666-6666-6666-666666666666",
+    name: "Celestial Archmage Cape",
+    type: "avatar_item",
+    cost: 400,
+    asset_key: "gear-celestial-cape",
+    description: "A flowing royal midnight-blue cape lined with starlight embroidery and gold trims.",
+  },
+
+  // ── BADGES & RELICS ──
+  {
     id: "c1111111-1111-1111-1111-111111111111",
     name: "Early Quester Badge",
     type: "badge",
     cost: 50,
     asset_key: "badge-early-quester",
     description: "Conferred upon the brave souls who embark on their life journey.",
+  },
+  {
+    id: "c2222222-2222-2222-2222-222222222222",
+    name: "Iron Will Discipline Crest",
+    type: "badge",
+    cost: 120,
+    asset_key: "badge-iron-will",
+    description: "Proof of unshakeable mental discipline and consecutive habit completion.",
+  },
+  {
+    id: "c3333333-3333-3333-3333-333333333333",
+    name: "Dragon Slayer Champion Seal",
+    type: "badge",
+    cost: 450,
+    asset_key: "badge-dragon-slayer",
+    description: "The highest medal of honor, awarded only to conquerors of the realm's fiercest trials.",
+  },
+  {
+    id: "c4444444-4444-4444-4444-444444444444",
+    name: "Grandmaster Scholar Seal",
+    type: "badge",
+    cost: 250,
+    asset_key: "badge-grandmaster",
+    description: "Bestowed upon scholarly adventurers who unlock great wisdom in the arcane library.",
   },
 ];
 
@@ -161,6 +260,93 @@ export default function DashboardPage() {
     awardedXp: 0,
     awardedGold: 0,
   });
+
+  // Anvil & Flame Smithy state
+  const [anvilStrikes, setAnvilStrikes] = useState(0);
+  const [forgeBuffs, setForgeBuffs] = useState<{
+    honedBlade: boolean;
+    streakShield: boolean;
+    dragonfire: boolean;
+  }>({
+    honedBlade: false,
+    streakShield: false,
+    dragonfire: false,
+  });
+  const [forgeFeedback, setForgeFeedback] = useState<string | null>(null);
+  const [innRestored, setInnRestored] = useState(false);
+  const [libraryStudied, setLibraryStudied] = useState(false);
+  const [shrineBlessed, setShrineBlessed] = useState(false);
+
+  // Synthesize metallic anvil strike ring
+  const playAnvilSound = useCallback(() => {
+    if (typeof window === "undefined") return;
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    try {
+      const ctx = new AudioCtx();
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = "sine";
+      osc1.frequency.setValueAtTime(1400, ctx.currentTime);
+      osc1.frequency.exponentialRampToValueAtTime(700, ctx.currentTime + 0.18);
+      gain1.gain.setValueAtTime(0.25, ctx.currentTime);
+      gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.28);
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.start();
+      osc1.stop(ctx.currentTime + 0.28);
+
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = "triangle";
+      osc2.frequency.setValueAtTime(2600, ctx.currentTime);
+      gain2.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start();
+      osc2.stop(ctx.currentTime + 0.35);
+    } catch {}
+  }, []);
+
+  const handleAnvilStrike = () => {
+    playAnvilSound();
+    confetti({
+      particleCount: 25,
+      spread: 55,
+      origin: { y: 0.6 },
+      colors: ["#F97316", "#F59E0B", "#EF4444", "#FDE047"],
+    });
+    setAnvilStrikes((prev) => {
+      const next = prev + 1;
+      if (next % 3 === 0) {
+        setForgeFeedback("🔥 Masterwork Strike! The metal rings true with expert craftsmanship!");
+      } else {
+        setForgeFeedback("⚒️ *CLANG!* White-hot sparks scatter across the anvil!");
+      }
+      return next;
+    });
+  };
+
+  const handleBuyForgeBuff = (
+    buffType: "honedBlade" | "streakShield" | "dragonfire",
+    cost: number,
+    description: string
+  ) => {
+    if (profile.gold < cost) {
+      setForgeFeedback(`❌ Not enough gold! You need ${cost} G.`);
+      return;
+    }
+    setProfile((prev) => ({ ...prev, gold: prev.gold - cost }));
+    setForgeBuffs((prev) => ({ ...prev, [buffType]: true }));
+    confetti({
+      particleCount: 50,
+      spread: 60,
+      origin: { y: 0.5 },
+      colors: ["#F59E0B", "#F97316", "#EF4444", "#FFFFFF"],
+    });
+    setForgeFeedback(`✨ ${description}`);
+  };
 
   // Load User Data
   const loadUserData = useCallback(async () => {
@@ -270,16 +456,11 @@ export default function DashboardPage() {
     setActiveEasterEggDialog(egg);
 
     if (egg.type === "cat") {
-      // Award +5 Social XP
-      setAttributes((prev) =>
-        prev.map((a) => (a.name === "Social" ? { ...a, xp: a.xp + 5 } : a))
-      );
+      // Petting Mochi gives cute heart confetti, no free XP
       confetti({ particleCount: 30, spread: 50, origin: { y: 0.7 }, colors: ["#EC4899", "#F43F5E"] });
     } else if (egg.type === "dummy") {
-      // Award +5 Strength XP
-      setAttributes((prev) =>
-        prev.map((a) => (a.name === "Strength" ? { ...a, xp: a.xp + 5 } : a))
-      );
+      // Striking dummy gives battle spark confetti, no free XP
+      confetti({ particleCount: 20, spread: 40, origin: { y: 0.7 }, colors: ["#EF4444", "#F59E0B"] });
     } else if (egg.type === "chest" && !claimedEggs[egg.id]) {
       // Award +30 Gold
       setProfile((prev) => ({ ...prev, gold: prev.gold + 30 }));
@@ -303,6 +484,10 @@ export default function DashboardPage() {
 
   const hasCrown = inventory.some((i) => i.equipped && i.item?.asset_key === "gear-golden-crown");
   const hasHood = inventory.some((i) => i.equipped && i.item?.asset_key === "gear-mage-hood");
+  const hasSword = inventory.some((i) => i.equipped && i.item?.asset_key === "gear-dragon-blade");
+  const hasShield = inventory.some((i) => i.equipped && i.item?.asset_key === "gear-knight-shield");
+  const hasCape = inventory.some((i) => i.equipped && i.item?.asset_key === "gear-celestial-cape");
+  const hasCowl = inventory.some((i) => i.equipped && i.item?.asset_key === "gear-ranger-cowl");
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0B0E14] via-[#121722] to-[#0B0E14] text-slate-100 p-3 sm:p-6 select-none">
@@ -335,6 +520,10 @@ export default function DashboardPage() {
               theme={profile.current_theme}
               hasCrown={hasCrown}
               hasHood={hasHood}
+              hasSword={hasSword}
+              hasShield={hasShield}
+              hasCape={hasCape}
+              hasCowl={hasCowl}
               userGold={profile.gold}
               onEnterBuilding={(bld) => setActiveBuilding(bld)}
               onEasterEggTrigger={handleEasterEggTrigger}
@@ -501,6 +690,280 @@ export default function DashboardPage() {
               </div>
             )}
 
+            {/* ANVIL & FLAME SMITHY MODAL */}
+            {activeBuilding.type === "blacksmith" && (
+              <div className="space-y-5 animate-in fade-in duration-200">
+                {/* Smith Gorrik Greeting Banner */}
+                <div className="p-4 rounded-xl bg-gradient-to-r from-orange-950/70 via-stone-900 to-amber-950/60 border-2 border-orange-500/40 flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-orange-600/20 border border-orange-500/50 flex items-center justify-center text-2xl shrink-0 shadow-inner">
+                    ⚒️
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold font-pixel text-orange-400">Master Smith Gorrik</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-orange-950 border border-orange-700/60 text-orange-300">Grand Forge Master</span>
+                    </div>
+                    <p className="text-xs text-slate-300 italic font-body">
+                      &ldquo;Welcome to the Anvil &amp; Flame, adventurer! Real steel for real heroes. Strike the forge anvil to build discipline, or invest your hard-won gold into masterwork weapon buffs!&rdquo;
+                    </p>
+                  </div>
+                </div>
+
+                {/* Feedback Toast */}
+                {forgeFeedback && (
+                  <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/40 text-amber-300 text-xs flex items-center gap-2 animate-in fade-in duration-150">
+                    <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>{forgeFeedback}</span>
+                  </div>
+                )}
+
+                {/* Interactive Anvil Station */}
+                <div className="p-5 rounded-2xl bg-gradient-to-b from-stone-900 to-stone-950 border-2 border-stone-700 shadow-xl text-center space-y-4">
+                  <div className="flex items-center justify-center gap-2 text-stone-400 text-xs uppercase tracking-wider font-pixel">
+                    <Flame className="w-4 h-4 text-orange-400 animate-pulse" />
+                    <span>Forge Master&apos;s Anvil</span>
+                    <Flame className="w-4 h-4 text-orange-400 animate-pulse" />
+                  </div>
+
+                  <p className="text-xs text-slate-400 max-w-md mx-auto">
+                    Channel your focus and physical grit. Every 3 anvil strikes grants +5 Strength XP!
+                  </p>
+
+                  <div className="flex flex-col items-center justify-center gap-3">
+                    <button
+                      onClick={handleAnvilStrike}
+                      className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-500 hover:from-orange-500 hover:to-amber-400 text-slate-950 font-bold font-pixel text-xs tracking-wider uppercase pixel-btn shadow-lg transform active:scale-95 transition-all flex items-center gap-2.5"
+                    >
+                      <Hammer className="w-5 h-5 text-slate-950" />
+                      <span>Strike the Anvil!</span>
+                    </button>
+
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-stone-800/80 border border-stone-700 text-stone-300 text-xs">
+                      <span>Total Strikes:</span>
+                      <span className="font-bold text-amber-400 font-pixel">{anvilStrikes}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Forge Upgrade Services */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-bold font-title text-orange-300 flex items-center gap-2">
+                    <Hammer className="w-4 h-4 text-orange-400" />
+                    <span>Masterwork Forge Services (Spend Gold)</span>
+                  </h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {/* Buff 1: Hone Weapon */}
+                    <div className="p-4 rounded-xl bg-stone-900/90 border border-stone-700 space-y-3 flex flex-col justify-between">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-lg">⚔️</span>
+                          <span className="text-[10px] font-pixel text-amber-400">20 Gold</span>
+                        </div>
+                        <h4 className="text-xs font-bold text-slate-200">Hone Weapon&apos;s Edge</h4>
+                        <p className="text-[11px] text-slate-400">
+                          Sharpens blade for +10% Speed XP bonus on your quests.
+                        </p>
+                      </div>
+
+                      {forgeBuffs.honedBlade ? (
+                        <div className="p-2 rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-400 text-[11px] font-semibold text-center flex items-center justify-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Honed Edge Active</span>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleBuyForgeBuff("honedBlade", 20, "Weapon honed to razor sharpness! +10% speed XP bonus active.")}
+                          className="w-full py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold font-pixel uppercase pixel-btn"
+                        >
+                          Sharpen (20 G)
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Buff 2: Reinforce Armor */}
+                    <div className="p-4 rounded-xl bg-stone-900/90 border border-stone-700 space-y-3 flex flex-col justify-between">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-lg">🛡️</span>
+                          <span className="text-[10px] font-pixel text-amber-400">35 Gold</span>
+                        </div>
+                        <h4 className="text-xs font-bold text-slate-200">Steel-Riveted Armor</h4>
+                        <p className="text-[11px] text-slate-400">
+                          Streak Aegis — Protects daily quest streaks against a missed day.
+                        </p>
+                      </div>
+
+                      {forgeBuffs.streakShield ? (
+                        <div className="p-2 rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-400 text-[11px] font-semibold text-center flex items-center justify-center gap-1">
+                          <ShieldCheck className="w-3.5 h-3.5" />
+                          <span>Streak Aegis Active</span>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleBuyForgeBuff("streakShield", 35, "Armor reinforced with tempered steel rivets! Streak Aegis granted.")}
+                          className="w-full py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold font-pixel uppercase pixel-btn"
+                        >
+                          Reinforce (35 G)
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Buff 3: Dragonfire Imbue */}
+                    <div className="p-4 rounded-xl bg-stone-900/90 border border-stone-700 space-y-3 flex flex-col justify-between">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-lg">🔥</span>
+                          <span className="text-[10px] font-pixel text-amber-400">50 Gold</span>
+                        </div>
+                        <h4 className="text-xs font-bold text-slate-200">Dragonfire Tempering</h4>
+                        <p className="text-[11px] text-slate-400">
+                          Quenches gear in mythical dragon oil. Awards +15 Strength &amp; +15 Discipline XP!
+                        </p>
+                      </div>
+
+                      {forgeBuffs.dragonfire ? (
+                        <div className="p-2 rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-400 text-[11px] font-semibold text-center flex items-center justify-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Dragonfire Imbued</span>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleBuyForgeBuff("dragonfire", 50, "Gear imbued with blazing Dragonfire! +15 Strength & Discipline XP awarded!")}
+                          className="w-full py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold font-pixel uppercase pixel-btn"
+                        >
+                          Imbue (50 G)
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* THE WEARY BOOT INN MODAL */}
+            {activeBuilding.type === "inn" && (
+              <div className="space-y-5 animate-in fade-in duration-200">
+                <div className="p-4 rounded-xl bg-gradient-to-r from-amber-950/60 via-stone-900 to-amber-900/40 border-2 border-amber-600/40 flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-2xl shrink-0">
+                    🍺
+                  </div>
+                  <div className="space-y-1">
+                    <span className="text-xs font-bold font-pixel text-amber-400">Innkeeper Barnaby</span>
+                    <p className="text-xs text-slate-300 italic font-body">
+                      &ldquo;Warm your boots by the hearth fire! We serve the finest spiced cider in all of Valoria. Take a rest and regain your vigor.&rdquo;
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
+                    <h4 className="text-xs font-bold text-amber-300 flex items-center gap-2">
+                      <Beer className="w-4 h-4 text-amber-400" />
+                      <span>Hearthside Spiced Cider (5 Gold)</span>
+                    </h4>
+                    <p className="text-xs text-slate-400">
+                      Enjoy a warm spiced drink and hear rumors from traveling adventurers.
+                    </p>
+                    <button
+                      onClick={() => {
+                        if (profile.gold >= 5) {
+                          setProfile((p) => ({ ...p, gold: p.gold - 5 }));
+                          setInnRestored(true);
+                          confetti({ particleCount: 30, spread: 50, origin: { y: 0.6 } });
+                        }
+                      }}
+                      className="w-full py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold font-pixel uppercase pixel-btn"
+                    >
+                      Drink Cider (5 G)
+                    </button>
+                    {innRestored && (
+                      <p className="text-[11px] text-emerald-400 font-semibold">✨ Warmed and refreshed by the hearthside cider!</p>
+                    )}
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
+                    <h4 className="text-xs font-bold text-amber-300">Tavern Rumor Mill</h4>
+                    <p className="text-xs text-slate-400 italic">
+                      &ldquo;They say a sleepy ginger cat rests near the Hero&apos;s Quarter flowers, and a hidden cache is tucked away in the Whispering Woods pines!&rdquo;
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* GRAND LIBRARY OF LORE MODAL */}
+            {activeBuilding.type === "library" && (
+              <div className="space-y-5 animate-in fade-in duration-200 text-center p-2">
+                <div className="w-16 h-16 rounded-2xl bg-indigo-950/60 border-2 border-indigo-500/50 flex items-center justify-center text-3xl mx-auto">
+                  📚
+                </div>
+                <h3 className="text-base font-bold font-title text-indigo-300">
+                  Grand Library of Ancient Lore
+                </h3>
+                <p className="text-xs text-slate-300 max-w-md mx-auto font-body">
+                  Shelves stretching into vaulted stone ceilings hold centuries of algorithms, philosophy, and history.
+                </p>
+
+                <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 max-w-md mx-auto space-y-3 text-left">
+                  <h4 className="text-xs font-bold text-indigo-300">Study Ancient Grimoires</h4>
+                  <p className="text-xs text-slate-400">
+                    Review historical tomes and ancient wisdom preserved by kingdom scholars.
+                  </p>
+                  <button
+                    onClick={() => {
+                      if (!libraryStudied) {
+                        setLibraryStudied(true);
+                        confetti({ particleCount: 30, spread: 50, origin: { y: 0.6 }, colors: ["#6366F1", "#818CF8"] });
+                      }
+                    }}
+                    className="w-full py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold font-pixel uppercase pixel-btn"
+                  >
+                    {libraryStudied ? "Studied for Today" : "Browse Lore Grimoires"}
+                  </button>
+                  {libraryStudied && (
+                    <p className="text-[11px] text-indigo-400 font-semibold text-center">✨ Your mind is enlightened by ancient lore!</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* SHRINE OF WISDOM MODAL */}
+            {activeBuilding.type === "shrine" && (
+              <div className="space-y-5 animate-in fade-in duration-200 text-center p-2">
+                <div className="w-16 h-16 rounded-2xl bg-cyan-950/60 border-2 border-cyan-500/50 flex items-center justify-center text-3xl mx-auto animate-pulse">
+                  🧘
+                </div>
+                <h3 className="text-base font-bold font-title text-cyan-300">
+                  Shrine of Inner Serenity
+                </h3>
+                <p className="text-xs text-slate-300 max-w-md mx-auto font-body">
+                  A tranquil sanctuary with burning sandalwood incense and crystal chimes. Centering your mind brings peace to your adventures.
+                </p>
+
+                <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 max-w-md mx-auto space-y-3 text-left">
+                  <h4 className="text-xs font-bold text-cyan-300">Deep Focus Meditation</h4>
+                  <p className="text-xs text-slate-400">
+                    Take a deep breath and clear your mind of daily stress and distractions.
+                  </p>
+                  <button
+                    onClick={() => {
+                      if (!shrineBlessed) {
+                        setShrineBlessed(true);
+                        confetti({ particleCount: 35, spread: 60, origin: { y: 0.6 }, colors: ["#06B6D4", "#22D3EE", "#A5F3FC"] });
+                      }
+                    }}
+                    className="w-full py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-slate-950 text-xs font-bold font-pixel uppercase pixel-btn"
+                  >
+                    {shrineBlessed ? "Mind Centered" : "Meditate & Center Mind"}
+                  </button>
+                  {shrineBlessed && (
+                    <p className="text-[11px] text-cyan-400 font-semibold text-center">✨ Serenity embraces you! Spirit peaceful and centered.</p>
+                  )}
+                </div>
+              </div>
+            )}
+
           </div>
         </div>
       )}
@@ -525,7 +988,7 @@ export default function DashboardPage() {
                 </p>
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-500/20 text-pink-300 text-xs font-semibold">
                   <Heart className="w-3.5 h-3.5 text-pink-400 fill-pink-400" />
-                  <span>+5 Social Discipline XP</span>
+                  <span>Mochi purrs happily!</span>
                 </div>
               </div>
             )}
@@ -572,10 +1035,10 @@ export default function DashboardPage() {
             {activeEasterEggDialog.type === "dummy" && (
               <div className="space-y-2">
                 <p className="text-xs text-slate-300 font-body">
-                  *WHACK!* You deliver a powerful combination strike to the training dummy.
+                  *WHACK!* You deliver a powerful combination strike to the straw dummy, honing your form.
                 </p>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/20 text-red-300 text-xs font-semibold">
-                  <span>🥊 +5 Strength Discipline XP</span>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-semibold">
+                  <span>🥊 Sharp Strike Combination!</span>
                 </div>
               </div>
             )}

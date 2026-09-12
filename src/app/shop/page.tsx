@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 
 const DEFAULT_SHOP_ITEMS: ShopItem[] = [
+  // ── THEMES ──
   {
     id: "a1111111-1111-1111-1111-111111111111",
     name: "Dungeon Tavern Theme",
@@ -35,6 +36,32 @@ const DEFAULT_SHOP_ITEMS: ShopItem[] = [
     description: "Sleek neon grid theme inspired by the neon underworld of 2099.",
   },
   {
+    id: "a3333333-3333-3333-3333-333333333333",
+    name: "Emerald Forest Sanctuary",
+    type: "theme",
+    cost: 250,
+    asset_key: "theme-emerald",
+    description: "Deep twilight emerald forest canopy with mystical teal waters and glowing night flora.",
+  },
+  {
+    id: "a4444444-4444-4444-4444-444444444444",
+    name: "Golden Autumn Citadel",
+    type: "theme",
+    cost: 250,
+    asset_key: "theme-autumn",
+    description: "Warm Johto-inspired autumn foliage, golden pathways, and russet-tile roofs.",
+  },
+  {
+    id: "a5555555-5555-5555-5555-555555555555",
+    name: "Lavender Spirit Realm",
+    type: "theme",
+    cost: 280,
+    asset_key: "theme-lavender",
+    description: "An ethereal twilight realm of soft violet paths, haunted blossoms, and spiritual mist.",
+  },
+
+  // ── AVATAR GEAR & COSMETICS ──
+  {
     id: "b1111111-1111-1111-1111-111111111111",
     name: "Mage Hood",
     type: "avatar_item",
@@ -51,12 +78,70 @@ const DEFAULT_SHOP_ITEMS: ShopItem[] = [
     description: "Forged from pure aurum for true champions of discipline.",
   },
   {
+    id: "b3333333-3333-3333-3333-333333333333",
+    name: "Dragonfang Broadsword",
+    type: "avatar_item",
+    cost: 350,
+    asset_key: "gear-dragon-blade",
+    description: "A legendary blade forged in dragon flame, sheathed at your hip ready for battle.",
+  },
+  {
+    id: "b4444444-4444-4444-4444-444444444444",
+    name: "Lionheart Aegis Shield",
+    type: "avatar_item",
+    cost: 275,
+    asset_key: "gear-knight-shield",
+    description: "An ornate royal heater shield bearing the golden lion crest of the high kingdom.",
+  },
+  {
+    id: "b5555555-5555-5555-5555-555555555555",
+    name: "Shadowstalker Ranger Cowl",
+    type: "avatar_item",
+    cost: 220,
+    asset_key: "gear-ranger-cowl",
+    description: "A stealthy forest ranger cowl fitted with an emerald hawk plume feather.",
+  },
+  {
+    id: "b6666666-6666-6666-6666-666666666666",
+    name: "Celestial Archmage Cape",
+    type: "avatar_item",
+    cost: 400,
+    asset_key: "gear-celestial-cape",
+    description: "A flowing royal midnight-blue cape lined with starlight embroidery and gold trims.",
+  },
+
+  // ── BADGES & RELICS ──
+  {
     id: "c1111111-1111-1111-1111-111111111111",
     name: "Early Quester Badge",
     type: "badge",
     cost: 50,
     asset_key: "badge-early-quester",
     description: "Conferred upon the brave souls who embark on their life journey.",
+  },
+  {
+    id: "c2222222-2222-2222-2222-222222222222",
+    name: "Iron Will Discipline Crest",
+    type: "badge",
+    cost: 120,
+    asset_key: "badge-iron-will",
+    description: "Proof of unshakeable mental discipline and consecutive habit completion.",
+  },
+  {
+    id: "c3333333-3333-3333-3333-333333333333",
+    name: "Dragon Slayer Champion Seal",
+    type: "badge",
+    cost: 450,
+    asset_key: "badge-dragon-slayer",
+    description: "The highest medal of honor, awarded only to conquerors of the realm's fiercest trials.",
+  },
+  {
+    id: "c4444444-4444-4444-4444-444444444444",
+    name: "Grandmaster Scholar Seal",
+    type: "badge",
+    cost: 250,
+    asset_key: "badge-grandmaster",
+    description: "Bestowed upon scholarly adventurers who unlock great wisdom in the arcane library.",
   },
 ];
 
