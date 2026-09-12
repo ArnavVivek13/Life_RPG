@@ -44,6 +44,7 @@ export default function TaskCard({ task, onComplete, onDelete }: TaskCardProps) 
 
   const speedInfo = calculateSpeedMultiplier(task.created_at, task.deadline);
   const isCompleted = task.status === "completed";
+  const isOverdue = !!task.deadline && new Date(task.deadline).getTime() < Date.now() && !isCompleted;
 
   const handleComplete = async () => {
     if (isCompleted || isCompleting) return;
@@ -114,12 +115,19 @@ export default function TaskCard({ task, onComplete, onDelete }: TaskCardProps) 
       <div className="flex items-center justify-between pt-2.5 border-t border-slate-800/80 text-xs">
         
         {task.deadline ? (
-          <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
-            <Clock className="w-3.5 h-3.5 text-slate-500" />
-            <span>{new Date(task.deadline).toLocaleDateString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+          <div className="flex items-center gap-1.5 text-[11px] text-slate-400 flex-wrap">
+            <Clock className={`w-3.5 h-3.5 ${isOverdue ? "text-red-400" : "text-slate-500"}`} />
+            <span className={isOverdue ? "text-red-400 font-medium" : ""}>
+              {new Date(task.deadline).toLocaleDateString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+            </span>
             {speedInfo.multiplier > 1.0 && !isCompleted && (
-              <span className="text-[10px] text-amber-400 font-pixel font-bold flex items-center gap-0.5 px-1.5 py-0.2 rounded bg-amber-500/10 border border-amber-500/30">
+              <span className="text-[10px] text-amber-400 font-pixel font-bold flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/30">
                 <Zap className="w-2.5 h-2.5" /> {speedInfo.multiplier}x
+              </span>
+            )}
+            {isOverdue && (
+              <span className="text-[10px] text-red-400 font-pixel font-bold flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-red-500/10 border border-red-500/30">
+                Overdue ({speedInfo.multiplier}x)
               </span>
             )}
           </div>
