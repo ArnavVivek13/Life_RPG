@@ -1,0 +1,66 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Outfit:wght@300;400;500;600;700&family=Press+Start+2P&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-pixel: 'Press Start 2P', monospace;
+  --font-title: 'Cinzel', serif;
+  --font-body: 'Outfit', sans-serif;
+  
+  --bg-color: #0B0E14;
+  --surface-color: #121722;
+  --surface-border: #2A364F;
+  --accent-gold: #F59E0B;
+}
+
+[data-theme="cyberpunk"] {
+  --bg-color: #070913;
+  --surface-color: #0e1224;
+  --surface-border: #2b1f54;
+  --accent-gold: #06b6d4;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: #E2E8F0;
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* Custom Scrollbar for RPG feel */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0B0E14;
+}
+::-webkit-scrollbar-thumb {
+  background: #2A364F;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3B4B6E;
+}
+
+/* Tactile Pixel Border Utility */
+.pixel-box {
+  background-color: var(--surface-color);
+  border: 2px solid var(--surface-border);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.4);
+}
+
+.pixel-btn {
+  transition: all 0.15s ease-in-out;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.5);
+}
+.pixel-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.5);
+}
+.pixel-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
+}
