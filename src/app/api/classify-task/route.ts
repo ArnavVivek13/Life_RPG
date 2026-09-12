@@ -29,6 +29,49 @@ const HEURISTIC_KEYWORDS: Record<AttributeName, string[]> = {
   ],
 };
 
+// ============================================================================
+// FACTUAL BENCHMARK ONTOLOGY (Empirical Human Baseline Standards)
+// ============================================================================
+const FACTUAL_BENCHMARK_ONTOLOGY = `
+EMPIRICAL HUMAN PERFORMANCE & EFFORT BENCHMARK ONTOLOGY:
+
+1. Software & Algorithmic Problem Solving:
+   - LeetCode Easy: 15–25 min/problem (Cognitive: 6/10, Low-Medium Strain)
+   - LeetCode Medium: 30–45 min/problem (Cognitive: 8/10, High Focus)
+   - LeetCode Hard: 50–80 min/problem (Cognitive: 9.5/10, Peak Focus)
+   - 1–2 Problems: ~30–50 min total -> EASY (10–15 XP, Effort: 15–25)
+   - 3–5 Problems: ~1.5–2.5 hours total -> MEDIUM (20–30 XP, Effort: 35–60)
+   - 8–10+ Problems: ~4–6+ hours marathon grind -> HARD (40–50 XP, Effort: 75–95)
+   - Feature Engineering / Debugging Complex Systems: 2–4 hours -> HARD (40–50 XP)
+
+2. Reading, Writing & Academics:
+   - Adult Reading Speed (Carver / Rayner et al.): ~200–250 words/min (~1.5–2.0 min per book page)
+   - 10–15 Pages: ~20 min -> EASY (10–14 XP, Effort: 15–20)
+   - 30–50 Pages: ~60–90 min -> MEDIUM (20–28 XP, Effort: 35–55)
+   - 80–120+ Pages: ~2.5–4 hours -> HARD (38–48 XP, Effort: 70–90)
+   - University Course Review / Lecture Notes: 45–60 min -> MEDIUM (20–25 XP)
+   - Multi-chapter Exam Prep / Research Paper Writing: 3–5 hours -> HARD (42–50 XP)
+
+3. Physical Exertion (ACSM & Exercise Physiology Standards):
+   - Running Pace (Average Recreational Runner): 5:15–6:30 min/km
+   - 1–2.5 km (Warmup / Light Jog): 10–15 min -> EASY (10–14 XP, Effort: 15–22)
+   - 5 km (Standard 5K Run): 25–32 min -> MEDIUM (22–28 XP, Effort: 40–55)
+   - 10 km (Endurance Run): 52–65 min -> HARD (38–45 XP, Effort: 70–85)
+   - Half Marathon / Marathon: 1.75–4 hours -> HARD (48–50 XP, Effort: 95–100)
+   - Calisthenics Pushups: 15–25 reps (EASY, 10–12 XP); 50–75 reps (MEDIUM, 22–26 XP); 100+ reps (HARD, 40–46 XP)
+   - Hypertrophy / Weightlifting Session: 45–75 min focused compound lifts -> MEDIUM/HARD (25–35 XP)
+
+4. Domestic, Habits & Discipline:
+   - Micro-Chore (dishes, tidy desk, make bed, take out trash): 10–20 min -> EASY (10–12 XP, Effort: 10–18)
+   - Standard Routine (groceries, laundry wash & fold, cook dinner): 40–60 min -> MEDIUM (18–24 XP, Effort: 30–45)
+   - Deep Clean / Garage Overhaul / Financial Audit: 2–4 hours -> HARD (35–45 XP, Effort: 65–85)
+
+5. Creativity & Social:
+   - Daily sketch / 10 min journaling / quick social check-in: 10–20 min -> EASY (10–12 XP)
+   - Design mockup / 1500w draft / 1 hr team presentation: 60–90 min -> MEDIUM (20–28 XP)
+   - Complete digital painting / song composition / keynote speech: 3+ hours -> HARD (40–50 XP)
+`;
+
 function detectGibberish(text: string): boolean {
   const trimmed = text.trim();
   if (trimmed.length < 3) return true;
@@ -173,6 +216,72 @@ function classifyByHeuristics(title: string, description: string = ""): TaskClas
   };
 }
 
+// ============================================================================
+// LIVE REAL-TIME WEB SEARCH (Zero-Config DuckDuckGo + Optional Tavily Support)
+// ============================================================================
+async function performLiveWebSearch(query: string): Promise<string> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2500);
+
+    // 1. If TAVILY_API_KEY is configured, use official Tavily API
+    if (process.env.TAVILY_API_KEY) {
+      try {
+        const tavRes = await fetch("https://api.tavily.com/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            api_key: process.env.TAVILY_API_KEY,
+            query: `${query} average time required effort difficulty`,
+            search_depth: "basic",
+            max_results: 3,
+          }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+        if (tavRes.ok) {
+          const data = await tavRes.json();
+          if (data.results && data.results.length > 0) {
+            return data.results.map((r: any) => `• ${r.title}: ${r.content}`).join("\n");
+          }
+        }
+      } catch {
+        // Fall back to DuckDuckGo
+      }
+    }
+
+    // 2. Direct Live Web Search (DuckDuckGo HTML) - No API Key Needed!
+    const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query + " average duration effort time required")}`;
+    const res = await fetch(searchUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml",
+      },
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+
+    if (res.ok) {
+      const html = await res.text();
+      const snippetRegex = /class="result__snippet"[^>]*>([\s\S]*?)<\/a>/gi;
+      const snippets: string[] = [];
+      let match;
+      while ((match = snippetRegex.exec(html)) !== null && snippets.length < 3) {
+        const cleanText = match[1].replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/\s+/g, " ").trim();
+        if (cleanText.length > 25) {
+          snippets.push(`• ${cleanText}`);
+        }
+      }
+      if (snippets.length > 0) {
+        return snippets.join("\n");
+      }
+    }
+  } catch (err) {
+    console.warn("[Live Web Search] skipped or timed out:", err);
+  }
+  return "";
+}
+
 export async function POST(request: Request) {
   try {
     const { title, description } = await request.json();
@@ -184,74 +293,38 @@ export async function POST(request: Request) {
       );
     }
 
+    // 1. Perform live real-time web search for task facts and effort baselines
+    const liveWebContext = await performLiveWebSearch(title);
+
     const apiKey = process.env.LLM_API_KEY;
     const isPlaceholderKey = !apiKey || apiKey.includes("placeholder");
 
-    // If no real API key is present, use our instant heuristic classifier
+    // If no real API key is present, use our quantitative heuristic classifier
     if (isPlaceholderKey) {
       const result = classifyByHeuristics(title, description);
+      if (liveWebContext) {
+        result.reason = `${result.reason} (Web grounded)`;
+      }
       return NextResponse.json(result);
     }
 
-// ============================================================================
-// FACTUAL BENCHMARK ONTOLOGY (Empirical Human Baseline Standards)
-// ============================================================================
-const FACTUAL_BENCHMARK_ONTOLOGY = `
-EMPIRICAL HUMAN PERFORMANCE & EFFORT BENCHMARK ONTOLOGY:
+    // Determine endpoint URL (supports Groq, OpenAI, or custom provider)
+    const baseUrl = process.env.LLM_BASE_URL || (
+      apiKey.startsWith("gsk_") || (process.env.LLM_MODEL && process.env.LLM_MODEL.includes("llama"))
+        ? "https://api.groq.com/openai/v1"
+        : "https://api.openai.com/v1"
+    );
 
-1. Software & Algorithmic Problem Solving:
-   - LeetCode Easy: 15–25 min/problem (Cognitive: 6/10, Low-Medium Strain)
-   - LeetCode Medium: 30–45 min/problem (Cognitive: 8/10, High Focus)
-   - LeetCode Hard: 50–80 min/problem (Cognitive: 9.5/10, Peak Focus)
-   - 1–2 Problems: ~30–50 min total -> EASY (10–15 XP, Effort: 15–25)
-   - 3–5 Problems: ~1.5–2.5 hours total -> MEDIUM (20–30 XP, Effort: 35–60)
-   - 8–10+ Problems: ~4–6+ hours marathon grind -> HARD (40–50 XP, Effort: 75–95)
-   - Feature Engineering / Debugging Complex Systems: 2–4 hours -> HARD (40–50 XP)
+    // Purely semantic LLM evaluation grounded in Factual Benchmark Ontology + Live Web Search
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5500);
 
-2. Reading, Writing & Academics:
-   - Adult Reading Speed (Carver / Rayner et al.): ~200–250 words/min (~1.5–2.0 min per book page)
-   - 10–15 Pages: ~20 min -> EASY (10–14 XP, Effort: 15–20)
-   - 30–50 Pages: ~60–90 min -> MEDIUM (20–28 XP, Effort: 35–55)
-   - 80–120+ Pages: ~2.5–4 hours -> HARD (38–48 XP, Effort: 70–90)
-   - University Course Review / Lecture Notes: 45–60 min -> MEDIUM (20–25 XP)
-   - Multi-chapter Exam Prep / Research Paper Writing: 3–5 hours -> HARD (42–50 XP)
-
-3. Physical Exertion (ACSM & Exercise Physiology Standards):
-   - Running Pace (Average Recreational Runner): 5:15–6:30 min/km
-   - 1–2.5 km (Warmup / Light Jog): 10–15 min -> EASY (10–14 XP, Effort: 15–22)
-   - 5 km (Standard 5K Run): 25–32 min -> MEDIUM (22–28 XP, Effort: 40–55)
-   - 10 km (Endurance Run): 52–65 min -> HARD (38–45 XP, Effort: 70–85)
-   - Half Marathon / Marathon: 1.75–4 hours -> HARD (48–50 XP, Effort: 95–100)
-   - Calisthenics Pushups: 15–25 reps (EASY, 10–12 XP); 50–75 reps (MEDIUM, 22–26 XP); 100+ reps (HARD, 40–46 XP)
-   - Hypertrophy / Weightlifting Session: 45–75 min focused compound lifts -> MEDIUM/HARD (25–35 XP)
-
-4. Domestic, Habits & Discipline:
-   - Micro-Chore (dishes, tidy desk, make bed, take out trash): 10–20 min -> EASY (10–12 XP, Effort: 10–18)
-   - Standard Routine (groceries, laundry wash & fold, cook dinner): 40–60 min -> MEDIUM (18–24 XP, Effort: 30–45)
-   - Deep Clean / Garage Overhaul / Financial Audit: 2–4 hours -> HARD (35–45 XP, Effort: 65–85)
-
-5. Creativity & Social:
-   - Daily sketch / 10 min journaling / quick social check-in: 10–20 min -> EASY (10–12 XP)
-   - Design mockup / 1500w draft / 1 hr team presentation: 60–90 min -> MEDIUM (20–28 XP)
-   - Complete digital painting / song composition / keynote speech: 3+ hours -> HARD (40–50 XP)
-`;
-
-// Determine endpoint URL (supports Groq, OpenAI, or custom provider)
-const baseUrl = process.env.LLM_BASE_URL || (
-  apiKey.startsWith("gsk_") || (process.env.LLM_MODEL && process.env.LLM_MODEL.includes("llama"))
-    ? "https://api.groq.com/openai/v1"
-    : "https://api.openai.com/v1"
-);
-
-// Purely semantic LLM evaluation grounded in Factual Benchmark Ontology
-try {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 4500);
-
-  const systemPrompt = `You are the Quest Master AI for an RPG real-life progression system.
-You MUST ground your evaluation in the empirical human performance baseline ontology below:
+      const systemPrompt = `You are the Quest Master AI for an RPG real-life progression system.
+You MUST ground your evaluation in empirical human performance baselines and real-time web evidence.
 
 ${FACTUAL_BENCHMARK_ONTOLOGY}
+${liveWebContext ? `\n--- LIVE REAL-TIME WEB SEARCH EVIDENCE ---\n${liveWebContext}\n------------------------------------------\n` : ""}
 
 EVALUATION PROTOCOL:
 1. SEMANTIC GIBBERISH DETECTION:
@@ -262,7 +335,7 @@ Set "is_gibberish": true if input is keyboard smashing, trolling, nonsensical, o
 
 3. EMPIRICAL STATISTICAL DECOMPOSITION:
 Estimate:
-- "estimated_minutes": Realistic time an average person needs based on the ontology.
+- "estimated_minutes": Realistic time an average person needs based on the ontology and live web search.
 - "cognitive_load": 1 to 10 scale.
 - "physical_strain": 1 to 10 scale.
 - "effort_score": 1 to 100 calculated from (estimated_minutes / 60) * max(cognitive_load, physical_strain) * 10.
@@ -277,42 +350,42 @@ Respond ONLY with valid JSON:
   "difficulty": "easy" | "medium" | "hard",
   "suggested_xp": number (between 5 and 50),
   "is_gibberish": boolean,
-  "reason": "Clear explanation referencing the estimated time and effort score from the benchmark ontology."
+  "reason": "Clear explanation citing the estimated time and effort score from benchmark & live web data."
 }`;
 
-  const res = await fetch(`${baseUrl}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: process.env.LLM_MODEL || (apiKey.startsWith("gsk_") ? "llama-3.1-8b-instant" : "gpt-4o-mini"),
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: `Evaluate this quest:\nTitle: "${title}"\nDescription: "${description || "None"}"` }
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.1,
-      max_tokens: 220,
-    }),
-    signal: controller.signal,
-  });
+      const res = await fetch(`${baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: process.env.LLM_MODEL || (apiKey.startsWith("gsk_") ? "llama-3.1-8b-instant" : "gpt-4o-mini"),
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: `Evaluate this quest:\nTitle: "${title}"\nDescription: "${description || "None"}"` }
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.1,
+          max_tokens: 220,
+        }),
+        signal: controller.signal,
+      });
 
-  clearTimeout(timeoutId);
+      clearTimeout(timeoutId);
 
-  if (res.ok) {
-    const json = await res.json();
-    const parsed: TaskClassificationResult = JSON.parse(json.choices[0].message.content);
-    parsed.suggested_xp = Math.min(50, Math.max(5, Number(parsed.suggested_xp) || 20));
-    return NextResponse.json(parsed);
-  } else {
-    const errText = await res.text();
-    console.warn(`[LLM API Error ${res.status}]:`, errText);
-  }
-} catch (llmErr) {
-  console.warn("LLM API call failed or timed out:", llmErr);
-}
+      if (res.ok) {
+        const json = await res.json();
+        const parsed: TaskClassificationResult = JSON.parse(json.choices[0].message.content);
+        parsed.suggested_xp = Math.min(50, Math.max(5, Number(parsed.suggested_xp) || 20));
+        return NextResponse.json(parsed);
+      } else {
+        const errText = await res.text();
+        console.warn(`[LLM API Error ${res.status}]:`, errText);
+      }
+    } catch (llmErr) {
+      console.warn("LLM API call failed or timed out:", llmErr);
+    }
 
     // Graceful fallback on LLM failure
     const fallbackResult = classifyByHeuristics(title, description);
