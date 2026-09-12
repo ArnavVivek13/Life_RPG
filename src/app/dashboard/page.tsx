@@ -3,25 +3,21 @@
 import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { Profile, Attribute, Task, UserInventory } from "@/types/database.types";
+import { Profile, Attribute, Task, UserInventory, ShopItem } from "@/types/database.types";
 import { completeTaskAction } from "@/app/actions/game";
+import WorldMap from "@/components/world/WorldMap";
+import WorldHUD from "@/components/world/WorldHUD";
+import { Building } from "@/components/world/WorldMapData";
 import CharacterCard from "@/components/character/CharacterCard";
 import AttributeStats from "@/components/character/AttributeStats";
 import TaskList from "@/components/tasks/TaskList";
 import CreateTaskModal from "@/components/tasks/CreateTaskModal";
+import ShopGrid from "@/components/shop/ShopGrid";
+import InventoryGrid from "@/components/shop/InventoryGrid";
 import LevelUpModal from "@/components/ui/LevelUpModal";
-import Link from "next/link";
-import { 
-  Sword, 
-  ShoppingBag, 
-  LogOut, 
-  Sparkles, 
-  RefreshCw, 
-  Plus, 
-  ShieldCheck 
-} from "lucide-react";
+import { X, Sparkles, ShoppingBag, Package } from "lucide-react";
 
-// Mock Fallback Data in case Supabase is fresh/unseeded or guest offline
+// Mock Fallback Data
 const DEFAULT_PROFILE: Profile = {
   id: "guest-user",
   username: "Hero of Valoria",
@@ -84,18 +80,67 @@ const DEFAULT_TASKS: Task[] = [
   },
 ];
 
+const DEFAULT_SHOP_ITEMS: ShopItem[] = [
+  {
+    id: "a1111111-1111-1111-1111-111111111111",
+    name: "Dungeon Tavern Theme",
+    type: "theme",
+    cost: 0,
+    asset_key: "theme-default",
+    description: "The classic cozy medieval tavern where all legendary adventurers gather.",
+  },
+  {
+    id: "a2222222-2222-2222-2222-222222222222",
+    name: "Cyberpunk Neon Theme",
+    type: "theme",
+    cost: 300,
+    asset_key: "theme-cyberpunk",
+    description: "Sleek neon grid theme from the neon underworld of 2099.",
+  },
+  {
+    id: "b1111111-1111-1111-1111-111111111111",
+    name: "Mage Hood",
+    type: "avatar_item",
+    cost: 150,
+    asset_key: "gear-mage-hood",
+    description: "A mysterious hood woven from enchanted starlight silk.",
+  },
+  {
+    id: "b2222222-2222-2222-2222-222222222222",
+    name: "Golden Crown",
+    type: "avatar_item",
+    cost: 500,
+    asset_key: "gear-golden-crown",
+    description: "Forged from pure aurum for true champions of discipline.",
+  },
+  {
+    id: "c1111111-1111-1111-1111-111111111111",
+    name: "Early Quester Badge",
+    type: "badge",
+    cost: 50,
+    asset_key: "badge-early-quester",
+    description: "Conferred upon the brave souls who embark on their life journey.",
+  },
+];
+
 export default function DashboardPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<"world" | "classic">("world");
   const [profile, setProfile] = useState<Profile>(DEFAULT_PROFILE);
   const [attributes, setAttributes] = useState<Attribute[]>(DEFAULT_ATTRIBUTES);
   const [tasks, setTasks] = useState<Task[]>(DEFAULT_TASKS);
   const [inventory, setInventory] = useState<UserInventory[]>([]);
+  const [shopItems, setShopItems] = useState<ShopItem[]>(DEFAULT_SHOP_ITEMS);
 
-  // Modals state
+  // Active Building Modal state
+  const [activeBuilding, setActiveBuilding] = useState<Building | null>(null);
+  const [nearbyBuilding, setNearbyBuilding] = useState<Building | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [shopTab, setShopTab] = useState<"armory" | "backpack">("armory");
+
+  // Level up celebrate modal
   const [levelUpData, setLevelUpData] = useState<{
     isOpen: boolean;
     newLevel: number;
@@ -109,63 +154,47 @@ export default function DashboardPage() {
     awardedGold: 0,
   });
 
-  // Load User Data
+  // Load User Data from Supabase
   const loadUserData = useCallback(async () => {
-    setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
-      if (!user) {
-        // Allow demo mode without throwing
-        setLoading(false);
-        return;
-      }
+      const { data: items } = await supabase.from("shop_items").select("*");
+      if (items && items.length > 0) setShopItems(items);
 
-      // Fetch Profile
+      if (!user) return;
+
       const { data: profileData } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", user.id)
         .maybeSingle();
 
-      if (profileData) {
-        setProfile(profileData);
-      }
+      if (profileData) setProfile(profileData);
 
-      // Fetch Attributes
       const { data: attrData } = await supabase
         .from("attributes")
         .select("*")
         .eq("user_id", user.id);
 
-      if (attrData && attrData.length > 0) {
-        setAttributes(attrData);
-      }
+      if (attrData && attrData.length > 0) setAttributes(attrData);
 
-      // Fetch Tasks
       const { data: tasksData } = await supabase
         .from("tasks")
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
-      if (tasksData) {
-        setTasks(tasksData);
-      }
+      if (tasksData) setTasks(tasksData);
 
-      // Fetch Inventory
       const { data: invData } = await supabase
         .from("user_inventory")
         .select("*, item:shop_items(*)")
         .eq("user_id", user.id);
 
-      if (invData) {
-        setInventory(invData);
-      }
+      if (invData) setInventory(invData);
     } catch (err) {
       console.error("Error loading user data:", err);
-    } finally {
-      setLoading(false);
     }
   }, [supabase]);
 
@@ -173,9 +202,8 @@ export default function DashboardPage() {
     loadUserData();
   }, [loadUserData]);
 
-  // Handle Task Completion with Tactile Celebrations
+  // Handle Quest Completion
   const handleCompleteTask = async (task: Task) => {
-    // 1. Optimistic Task State Update
     setTasks((prev) =>
       prev.map((t) =>
         t.id === task.id
@@ -184,29 +212,22 @@ export default function DashboardPage() {
       )
     );
 
-    // 2. Execute Server Action (Anti-Cheat Server Calculation)
     const result = await completeTaskAction(task.id);
 
     if (result.success && result.data) {
       const { awarded_xp, awarded_gold, new_total_xp, new_level } = result.data;
-
-      // Update Profile
       setProfile((prev) => ({
         ...prev,
         total_xp: new_total_xp || prev.total_xp + awarded_xp,
         gold: prev.gold + awarded_gold,
       }));
 
-      // Update Attribute
       setAttributes((prev) =>
         prev.map((a) =>
-          a.name === task.category
-            ? { ...a, xp: a.xp + awarded_xp }
-            : a
+          a.name === task.category ? { ...a, xp: a.xp + awarded_xp } : a
         )
       );
 
-      // Open Level Up / Quest Claim Celebration
       setLevelUpData({
         isOpen: true,
         newLevel: new_level || 1,
@@ -215,7 +236,6 @@ export default function DashboardPage() {
         category: task.category,
       });
     } else {
-      // Offline / Local Demo fallback calculation
       const xp = task.base_xp;
       const gold = Math.max(5, Math.round(xp * 0.5));
       const newTotal = profile.total_xp + xp;
@@ -246,86 +266,216 @@ export default function DashboardPage() {
     router.push("/login");
   };
 
+  // Check equipped cosmetics
+  const hasCrown = inventory.some((i) => i.equipped && i.item?.asset_key === "gear-golden-crown");
+  const hasHood = inventory.some((i) => i.equipped && i.item?.asset_key === "gear-mage-hood");
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0B0E14] via-[#121722] to-[#0B0E14] text-slate-100 p-4 sm:p-6 lg:p-8">
-      <div className="max-w-5xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gradient-to-b from-[#0B0E14] via-[#121722] to-[#0B0E14] text-slate-100 p-3 sm:p-6 select-none">
+      <div className="max-w-5xl mx-auto space-y-4">
         
-        {/* Navigation Bar */}
-        <header className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl pixel-box bg-slate-900/90 border-2 border-slate-700 shadow-xl">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-              <Sword className="w-5 h-5" />
+        {/* Top GBA HUD Bar */}
+        <WorldHUD
+          profile={profile}
+          viewMode={viewMode}
+          onToggleViewMode={() => setViewMode((v) => (v === "world" ? "classic" : "world"))}
+          nearbyBuildingName={nearbyBuilding?.name}
+          onInteract={() => {
+            if (nearbyBuilding) setActiveBuilding(nearbyBuilding);
+          }}
+          onOpenShop={() => {
+            const shopBld = {
+              id: "shop",
+              name: "Guild Bazaar & Armory",
+              subtitle: "Trade gold for themes, hats & badges",
+              type: "shop" as const,
+              x: 0,
+              y: 0,
+              width: 0,
+              height: 0,
+              doorX: 0,
+              doorY: 0,
+              color: "",
+              roofColor: "",
+              trimColor: "",
+              signIcon: "🛒",
+            };
+            setActiveBuilding(shopBld);
+          }}
+          onSignOut={handleSignOut}
+        />
+
+        {/* VIEW 1: Pokémon GBA Interactive 2D World Map */}
+        {viewMode === "world" ? (
+          <div className="w-full flex justify-center animate-in fade-in duration-300">
+            <WorldMap
+              theme={profile.current_theme}
+              hasCrown={hasCrown}
+              hasHood={hasHood}
+              onEnterBuilding={(bld) => setActiveBuilding(bld)}
+              onNearbyBuildingChange={(bld) => setNearbyBuilding(bld)}
+            />
+          </div>
+        ) : (
+          /* VIEW 2: Classic Tabbed Dashboard */
+          <div className="space-y-6 animate-in fade-in duration-300">
+            <CharacterCard profile={profile} inventory={inventory} />
+            <AttributeStats attributes={attributes} />
+            <div className="space-y-3">
+              <h2 className="text-base font-bold font-title text-slate-100 flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-amber-400" />
+                <span>Active Quests & Notice Board</span>
+              </h2>
+              <TaskList
+                tasks={tasks}
+                onCompleteTask={handleCompleteTask}
+                onDeleteTask={handleDeleteTask}
+                onOpenCreateModal={() => setIsCreateOpen(true)}
+              />
             </div>
-            <div>
-              <h1 className="text-base font-bold font-title text-rpg-goldLight">Life RPG Realm</h1>
-              <p className="text-[10px] text-slate-400 font-pixel">Real-Time Progression Engine</p>
-            </div>
           </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={loadUserData}
-              disabled={loading}
-              className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
-              title="Refresh Realm Data"
-              aria-label="Refresh data"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-amber-400" : ""}`} />
-            </button>
-
-            <Link
-              href="/shop"
-              className="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-400 text-xs font-semibold flex items-center gap-1.5 transition-colors"
-            >
-              <ShoppingBag className="w-4 h-4" />
-              <span>Armory & Shop</span>
-            </Link>
-
-            <button
-              onClick={handleSignOut}
-              className="px-3 py-2 rounded-lg bg-red-950/60 hover:bg-red-900/60 border border-red-700/40 text-red-300 text-xs font-semibold flex items-center gap-1.5 transition-colors"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span>Leave</span>
-            </button>
-          </div>
-        </header>
-
-        {/* Character Card & Non-Linear XP Engine */}
-        <CharacterCard profile={profile} inventory={inventory} />
-
-        {/* 5 Core RPG Attributes Breakdown */}
-        <AttributeStats attributes={attributes} />
-
-        {/* Quest Log Board */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold font-title text-slate-100 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              <span>Active Quests & Trials</span>
-            </h2>
-            <span className="text-xs text-slate-400 font-body">
-              {tasks.filter((t) => t.status === "pending").length} Available Quests
-            </span>
-          </div>
-
-          <TaskList
-            tasks={tasks}
-            onCompleteTask={handleCompleteTask}
-            onDeleteTask={handleDeleteTask}
-            onOpenCreateModal={() => setIsCreateOpen(true)}
-          />
-        </div>
+        )}
 
       </div>
+
+      {/* BUILDING INTERACTION MODAL */}
+      {activeBuilding && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md animate-in fade-in duration-150"
+        >
+          <div className="max-w-4xl w-full max-h-[90vh] overflow-y-auto pixel-box p-5 sm:p-7 rounded-2xl bg-slate-900 border-2 border-slate-700 shadow-2xl space-y-5 relative">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">{activeBuilding.signIcon}</span>
+                <div>
+                  <h2 className="text-lg sm:text-xl font-bold font-title text-rpg-goldLight">
+                    {activeBuilding.name}
+                  </h2>
+                  <p className="text-xs text-slate-400 font-body">{activeBuilding.subtitle}</p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setActiveBuilding(null)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors focus:ring-2 focus:ring-amber-400"
+                aria-label="Close building modal"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Modal Body Based on Building Type */}
+            {activeBuilding.type === "guild" && (
+              <div className="space-y-4">
+                <TaskList
+                  tasks={tasks}
+                  onCompleteTask={handleCompleteTask}
+                  onDeleteTask={handleDeleteTask}
+                  onOpenCreateModal={() => setIsCreateOpen(true)}
+                />
+              </div>
+            )}
+
+            {activeBuilding.type === "house" && (
+              <div className="space-y-5">
+                <CharacterCard profile={profile} inventory={inventory} />
+                <div className="border-t border-slate-800 pt-4">
+                  <h3 className="text-sm font-bold font-title text-slate-200 mb-3">
+                    Equipped Gear & Cosmetics
+                  </h3>
+                  <InventoryGrid
+                    inventory={inventory}
+                    onEquipChanged={loadUserData}
+                  />
+                </div>
+              </div>
+            )}
+
+            {activeBuilding.type === "shop" && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+                  <button
+                    onClick={() => setShopTab("armory")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-pixel uppercase font-bold flex items-center gap-1.5 ${
+                      shopTab === "armory"
+                        ? "bg-amber-500 text-slate-950"
+                        : "bg-slate-800 text-slate-400"
+                    }`}
+                  >
+                    <ShoppingBag className="w-3.5 h-3.5" />
+                    <span>Guild Armory</span>
+                  </button>
+                  <button
+                    onClick={() => setShopTab("backpack")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-pixel uppercase font-bold flex items-center gap-1.5 ${
+                      shopTab === "backpack"
+                        ? "bg-amber-500 text-slate-950"
+                        : "bg-slate-800 text-slate-400"
+                    }`}
+                  >
+                    <Package className="w-3.5 h-3.5" />
+                    <span>Backpack ({inventory.length})</span>
+                  </button>
+                </div>
+
+                {shopTab === "armory" ? (
+                  <ShopGrid
+                    shopItems={shopItems}
+                    inventory={inventory}
+                    userGold={profile.gold}
+                    onItemPurchased={loadUserData}
+                  />
+                ) : (
+                  <InventoryGrid
+                    inventory={inventory}
+                    onEquipChanged={loadUserData}
+                  />
+                )}
+              </div>
+            )}
+
+            {activeBuilding.type === "dojo" && (
+              <div className="space-y-4">
+                <AttributeStats attributes={attributes} />
+                <p className="text-xs text-slate-400 text-center font-body">
+                  Complete specialized quests in Intellect, Strength, Discipline, Creativity, or Social to level up each discipline.
+                </p>
+              </div>
+            )}
+
+            {activeBuilding.type === "shrine" && (
+              <div className="space-y-4 text-center p-4">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500/20 to-red-500/20 border-2 border-amber-500/50 flex items-center justify-center text-3xl mx-auto animate-pulse">
+                  🔥
+                </div>
+                <h3 className="text-base font-bold font-title text-amber-300">
+                  {profile.streak_count}-Day Flame of Discipline
+                </h3>
+                <p className="text-xs text-slate-300 max-w-md mx-auto font-body">
+                  Your daily streak grants an automatic <strong>+{(Math.min(10, profile.streak_count) * 5)}% Gold Multiplier</strong> on every completed quest!
+                </p>
+                <div className="grid grid-cols-4 gap-2 max-w-sm mx-auto pt-2 text-[10px] font-pixel">
+                  <div className="p-2 rounded bg-slate-950 border border-slate-800 text-slate-400">3d: +15%</div>
+                  <div className="p-2 rounded bg-slate-950 border border-slate-800 text-slate-400">7d: +35%</div>
+                  <div className="p-2 rounded bg-slate-950 border border-amber-500/50 text-amber-300">10d: +50%</div>
+                  <div className="p-2 rounded bg-slate-950 border border-purple-500/50 text-purple-300">30d: Badge</div>
+                </div>
+              </div>
+            )}
+
+          </div>
+        </div>
+      )}
 
       {/* Create Quest Modal */}
       <CreateTaskModal
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
-        onTaskCreated={() => {
-          loadUserData();
-        }}
+        onTaskCreated={loadUserData}
       />
 
       {/* Celebratory Level-Up Burst Modal */}
