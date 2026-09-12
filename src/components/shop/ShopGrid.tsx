@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ShopItem, UserInventory } from "@/types/database.types";
 import { buyShopItemAction } from "@/app/actions/game";
+import { getItemPerk } from "@/lib/game/items";
 import {
   ShoppingBag,
   Sparkles,
@@ -98,6 +99,7 @@ export default function ShopGrid({ shopItems, inventory, userGold, onItemPurchas
         {shopItems.map((item) => {
           const isOwned = ownedItemIds.has(item.id);
           const Icon = ITEM_ICONS[item.asset_key] || Sparkles;
+          const perk = getItemPerk(item.asset_key);
 
           return (
             <div
@@ -121,6 +123,12 @@ export default function ShopGrid({ shopItems, inventory, userGold, onItemPurchas
                 <div>
                   <h4 className="text-sm font-bold font-title text-slate-100">{item.name}</h4>
                   <p className="text-xs text-slate-400 mt-1 font-body">{item.description}</p>
+                  {perk && (
+                    <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[10px] font-pixel">
+                      <Sparkles className="w-3 h-3 text-amber-400" />
+                      <span>{perk.badgeLabel}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { Profile } from "@/types/database.types";
+import { Profile, UserInventory } from "@/types/database.types";
 import { Building, DistrictZone } from "./WorldMapData";
 import { calculateLevelProgression } from "@/lib/game/math";
 import { 
@@ -12,11 +12,13 @@ import {
   LogOut,
   ShoppingBag,
   MapPin,
-  ShieldAlert
+  ShieldAlert,
+  Award
 } from "lucide-react";
 
 interface WorldHUDProps {
   profile: Profile;
+  inventory?: UserInventory[];
   viewMode: "world" | "classic";
   onToggleViewMode: () => void;
   nearbyBuilding?: Building | null;
@@ -30,6 +32,7 @@ interface WorldHUDProps {
 
 export default function WorldHUD({
   profile,
+  inventory = [],
   viewMode,
   onToggleViewMode,
   currentDistrict,
@@ -50,13 +53,25 @@ export default function WorldHUD({
             L{level}
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="font-bold text-sm font-title text-amber-200">
                 {profile.username || "Hero of Valoria"}
               </span>
               <span className="text-[9px] font-pixel px-2 py-0.5 rounded-full bg-slate-800/90 text-amber-400 border border-amber-500/30">
                 RANK {Math.min(10, Math.floor(level / 2) + 1)}
               </span>
+              {inventory
+                .filter((i) => i.equipped && i.item?.type === "badge")
+                .map((b) => (
+                  <span
+                    key={b.id || b.item_id}
+                    className="text-[9px] font-pixel px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/50 flex items-center gap-1 shadow-sm"
+                    title={`${b.item?.name}: ${b.item?.description}`}
+                  >
+                    <span>🎖️</span>
+                    <span className="hidden sm:inline">{b.item?.name}</span>
+                  </span>
+                ))}
             </div>
             
             {/* XP Bar */}

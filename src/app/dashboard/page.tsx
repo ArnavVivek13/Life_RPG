@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Profile, Attribute, Task, UserInventory, ShopItem } from "@/types/database.types";
 import { completeTaskAction } from "@/app/actions/game";
 import { calculateLevelProgression } from "@/lib/game/math";
+import { DEFAULT_SHOP_ITEMS, calculateEquippedBonuses } from "@/lib/game/items";
 import WorldMap from "@/components/world/WorldMap";
 import WorldHUD from "@/components/world/WorldHUD";
 import { Building, EasterEgg, DistrictZone, DISTRICT_ZONES, BUILDINGS } from "@/components/world/WorldMapData";
@@ -96,133 +97,7 @@ const DEFAULT_TASKS: Task[] = [
   },
 ];
 
-const DEFAULT_SHOP_ITEMS: ShopItem[] = [
-  // ── THEMES ──
-  {
-    id: "a1111111-1111-1111-1111-111111111111",
-    name: "Dungeon Tavern Theme",
-    type: "theme",
-    cost: 0,
-    asset_key: "theme-default",
-    description: "The classic cozy medieval tavern where all legendary adventurers gather.",
-  },
-  {
-    id: "a2222222-2222-2222-2222-222222222222",
-    name: "Cyberpunk Neon Theme",
-    type: "theme",
-    cost: 300,
-    asset_key: "theme-cyberpunk",
-    description: "Sleek neon grid theme from the neon underworld of 2099.",
-  },
-  {
-    id: "a3333333-3333-3333-3333-333333333333",
-    name: "Emerald Forest Sanctuary",
-    type: "theme",
-    cost: 250,
-    asset_key: "theme-emerald",
-    description: "Deep twilight emerald forest canopy with mystical teal waters and glowing night flora.",
-  },
-  {
-    id: "a4444444-4444-4444-4444-444444444444",
-    name: "Golden Autumn Citadel",
-    type: "theme",
-    cost: 250,
-    asset_key: "theme-autumn",
-    description: "Warm Johto-inspired autumn foliage, golden pathways, and russet-tile roofs.",
-  },
-  {
-    id: "a5555555-5555-5555-5555-555555555555",
-    name: "Lavender Spirit Realm",
-    type: "theme",
-    cost: 280,
-    asset_key: "theme-lavender",
-    description: "An ethereal twilight realm of soft violet paths, haunted blossoms, and spiritual mist.",
-  },
 
-  // ── AVATAR GEAR & COSMETICS ──
-  {
-    id: "b1111111-1111-1111-1111-111111111111",
-    name: "Mage Hood",
-    type: "avatar_item",
-    cost: 150,
-    asset_key: "gear-mage-hood",
-    description: "A mysterious hood woven from enchanted starlight silk.",
-  },
-  {
-    id: "b2222222-2222-2222-2222-222222222222",
-    name: "Golden Crown",
-    type: "avatar_item",
-    cost: 500,
-    asset_key: "gear-golden-crown",
-    description: "Forged from pure aurum for true champions of discipline.",
-  },
-  {
-    id: "b3333333-3333-3333-3333-333333333333",
-    name: "Dragonfang Broadsword",
-    type: "avatar_item",
-    cost: 350,
-    asset_key: "gear-dragon-blade",
-    description: "A legendary blade forged in dragon flame, sheathed at your hip ready for battle.",
-  },
-  {
-    id: "b4444444-4444-4444-4444-444444444444",
-    name: "Lionheart Aegis Shield",
-    type: "avatar_item",
-    cost: 275,
-    asset_key: "gear-knight-shield",
-    description: "An ornate royal heater shield bearing the golden lion crest of the high kingdom.",
-  },
-  {
-    id: "b5555555-5555-5555-5555-555555555555",
-    name: "Shadowstalker Ranger Cowl",
-    type: "avatar_item",
-    cost: 220,
-    asset_key: "gear-ranger-cowl",
-    description: "A stealthy forest ranger cowl fitted with an emerald hawk plume feather.",
-  },
-  {
-    id: "b6666666-6666-6666-6666-666666666666",
-    name: "Celestial Archmage Cape",
-    type: "avatar_item",
-    cost: 400,
-    asset_key: "gear-celestial-cape",
-    description: "A flowing royal midnight-blue cape lined with starlight embroidery and gold trims.",
-  },
-
-  // ── BADGES & RELICS ──
-  {
-    id: "c1111111-1111-1111-1111-111111111111",
-    name: "Early Quester Badge",
-    type: "badge",
-    cost: 50,
-    asset_key: "badge-early-quester",
-    description: "Conferred upon the brave souls who embark on their life journey.",
-  },
-  {
-    id: "c2222222-2222-2222-2222-222222222222",
-    name: "Iron Will Discipline Crest",
-    type: "badge",
-    cost: 120,
-    asset_key: "badge-iron-will",
-    description: "Proof of unshakeable mental discipline and consecutive habit completion.",
-  },
-  {
-    id: "c3333333-3333-3333-3333-333333333333",
-    name: "Dragon Slayer Champion Seal",
-    type: "badge",
-    cost: 450,
-    asset_key: "badge-dragon-slayer",
-    description: "The highest medal of honor, awarded only to conquerors of the realm's fiercest trials.",
-  },
-  {
-    id: "c4444444-4444-4444-4444-444444444444",
-    name: "Grandmaster Scholar Seal",
-    type: "badge",
-    cost: 250,
-    asset_key: "badge-grandmaster",
-    description: "Bestowed upon scholarly adventurers who unlock great wisdom in the arcane library.",
-  },
-];
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -486,8 +361,10 @@ export default function DashboardPage() {
         });
       }
     } else {
-      const xp = task.base_xp;
-      const gold = Math.max(5, Math.round(xp * 0.5));
+      const hasSpeed = !!(task.deadline && new Date(task.deadline).getTime() > Date.now());
+      const bonuses = calculateEquippedBonuses(inventory, task.category, hasSpeed);
+      const xp = Math.round(task.base_xp * bonuses.totalXpMultiplier);
+      const gold = Math.max(5, Math.round(xp * 0.5 * bonuses.totalGoldMultiplier));
       const newTotal = profile.total_xp + xp;
       const finalLevel = calculateLevelProgression(newTotal).level;
 
@@ -496,6 +373,12 @@ export default function DashboardPage() {
         total_xp: newTotal,
         gold: prev.gold + gold,
       }));
+
+      setAttributes((prev) =>
+        prev.map((a) =>
+          a.name === task.category ? { ...a, xp: a.xp + xp } : a
+        )
+      );
 
       // ONLY pop up if the player actually leveled up
       if (finalLevel > prevLevel) {
@@ -562,6 +445,7 @@ export default function DashboardPage() {
         {/* Top HUD Bar */}
         <WorldHUD
           profile={profile}
+          inventory={inventory}
           viewMode={viewMode}
           onToggleViewMode={() => setViewMode((v) => (v === "world" ? "classic" : "world"))}
           nearbyBuilding={nearbyBuilding}

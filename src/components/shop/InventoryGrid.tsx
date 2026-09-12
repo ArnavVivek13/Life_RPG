@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { UserInventory } from "@/types/database.types";
 import { equipItemAction } from "@/app/actions/game";
+import { getItemPerk } from "@/lib/game/items";
 import {
   Crown,
   Shield,
@@ -78,6 +79,7 @@ export default function InventoryGrid({ inventory, onEquipChanged }: InventoryGr
         const item = inv.item;
         if (!item) return null;
         const Icon = ITEM_ICONS[item.asset_key] || Sparkles;
+        const perk = getItemPerk(item.asset_key);
 
         return (
           <div
@@ -93,9 +95,13 @@ export default function InventoryGrid({ inventory, onEquipChanged }: InventoryGr
                 <div className="w-12 h-12 rounded-xl bg-slate-950 border border-slate-700 flex items-center justify-center text-amber-400 shadow-inner">
                   <Icon className="w-6 h-6" />
                 </div>
-                {inv.equipped && (
+                {inv.equipped ? (
                   <span className="text-[10px] font-pixel px-2 py-0.5 rounded bg-amber-500 text-slate-950 font-bold">
                     EQUIPPED
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-pixel px-2 py-0.5 rounded bg-slate-800 text-slate-400">
+                    IN BACKPACK
                   </span>
                 )}
               </div>
@@ -103,6 +109,16 @@ export default function InventoryGrid({ inventory, onEquipChanged }: InventoryGr
               <div>
                 <h4 className="text-sm font-bold font-title text-slate-100">{item.name}</h4>
                 <p className="text-xs text-slate-400 mt-1 font-body">{item.description}</p>
+                {perk && (
+                  <div className={`mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-pixel border ${
+                    inv.equipped 
+                      ? "bg-amber-500/20 border-amber-400/50 text-amber-300 shadow-sm"
+                      : "bg-slate-800/80 border-slate-700 text-slate-300"
+                  }`}>
+                    <Sparkles className="w-3 h-3 text-amber-400" />
+                    <span>{perk.badgeLabel}</span>
+                  </div>
+                )}
               </div>
             </div>
 

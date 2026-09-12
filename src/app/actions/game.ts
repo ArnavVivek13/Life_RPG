@@ -3,10 +3,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { AttributeName } from "@/types/database.types";
+import { DEFAULT_SHOP_ITEMS, calculateEquippedBonuses } from "@/lib/game/items";
 
 /**
  * Server Action: Complete a quest and calculate XP/Gold server-side.
- * Calls the anti-cheat Postgres RPC function.
+ * Calls the anti-cheat Postgres RPC function and applies equipped gear & badge perks.
  */
 export async function completeTaskAction(taskId: string) {
   const supabase = createClient();
@@ -15,6 +16,13 @@ export async function completeTaskAction(taskId: string) {
   if (authError || !user) {
     return { success: false, error: "You must be logged in to complete quests." };
   }
+
+  // Fetch task first to check category and deadline for speed bonuses
+  const { data: task } = await supabase
+    .from("tasks")
+    .select("*")
+    .eq("id", taskId)
+    .single();
 
   // Call the server-authoritative RPC function
   const { data, error } = await supabase.rpc("complete_task_rpc", {
@@ -26,9 +34,82 @@ export async function completeTaskAction(taskId: string) {
     return { success: false, error: error.message };
   }
 
+  let awarded_xp = data.awarded_xp;
+  let awarded_gold = data.awarded_gold;
+  let new_total_xp = data.new_total_xp;
+  let applied_perks: string[] = [];
+
+  // Apply equipped gear and badge bonuses if task exists
+  if (task) {
+    const { data: equippedInv } = await supabase
+      .from("user_inventory")
+      .select("*, item:shop_items(*)")
+      .eq("user_id", user.id)
+      .eq("equipped", true);
+
+    if (equippedInv && equippedInv.length > 0) {
+      const hasSpeed = !!(task.deadline && new Date(task.deadline).getTime() > Date.now());
+      const bonus = calculateEquippedBonuses(equippedInv, task.category, hasSpeed);
+      applied_perks = bonus.appliedPerks;
+
+      const extraXp = Math.round(data.awarded_xp * (bonus.totalXpMultiplier - 1.0));
+      const extraGold = Math.round(data.awarded_gold * (bonus.totalGoldMultiplier - 1.0));
+
+      if (extraXp > 0 || extraGold > 0) {
+        awarded_xp += extraXp;
+        awarded_gold += extraGold;
+        new_total_xp += extraXp;
+
+        // Apply bonus to user's profile in database
+        const { data: currentProfile } = await supabase
+          .from("profiles")
+          .select("total_xp, gold")
+          .eq("id", user.id)
+          .single();
+
+        if (currentProfile) {
+          await supabase
+            .from("profiles")
+            .update({
+              total_xp: currentProfile.total_xp + extraXp,
+              gold: currentProfile.gold + extraGold,
+            })
+            .eq("id", user.id);
+        }
+
+        // Apply bonus to specific attribute
+        if (extraXp > 0) {
+          const { data: currentAttr } = await supabase
+            .from("attributes")
+            .select("xp")
+            .eq("user_id", user.id)
+            .eq("name", task.category)
+            .single();
+
+          if (currentAttr) {
+            await supabase
+              .from("attributes")
+              .update({ xp: currentAttr.xp + extraXp })
+              .eq("user_id", user.id)
+              .eq("name", task.category);
+          }
+        }
+      }
+    }
+  }
+
   revalidatePath("/dashboard");
   revalidatePath("/");
-  return { success: true, data };
+  return { 
+    success: true, 
+    data: {
+      ...data,
+      awarded_xp,
+      awarded_gold,
+      new_total_xp,
+      applied_perks,
+    }
+  };
 }
 
 /**
@@ -111,15 +192,21 @@ export async function buyShopItemAction(itemId: string) {
     return { success: false, error: "Unauthorized." };
   }
 
-  // 1. Fetch item
-  const { data: item, error: itemError } = await supabase
+  // 1. Fetch item from DB or fallback from DEFAULT_SHOP_ITEMS
+  let { data: item, error: itemError } = await supabase
     .from("shop_items")
     .select("*")
     .eq("id", itemId)
-    .single();
+    .maybeSingle();
 
-  if (itemError || !item) {
-    return { success: false, error: "Item not found." };
+  if (!item) {
+    const fallback = DEFAULT_SHOP_ITEMS.find((i) => i.id === itemId);
+    if (fallback) {
+      await supabase.from("shop_items").upsert(fallback);
+      item = fallback;
+    } else {
+      return { success: false, error: "Item not found." };
+    }
   }
 
   // 2. Fetch profile
@@ -199,16 +286,31 @@ export async function equipItemAction(itemId: string, equip: boolean) {
     return { success: false, error: "Item not in your inventory." };
   }
 
-  // 2. If it's a theme, also update profile current_theme
-  if (inventoryItem.item?.type === "theme" && equip) {
-    const themeName = inventoryItem.item.asset_key.replace("theme-", "") || "default";
-    await supabase
-      .from("profiles")
-      .update({ current_theme: themeName })
-      .eq("id", user.id);
+  // 2. If it's a theme, enforce mutual exclusion and update profile
+  if (inventoryItem.item?.type === "theme") {
+    if (equip) {
+      // Unequip all other themes for this user
+      const themeIds = DEFAULT_SHOP_ITEMS.filter((i) => i.type === "theme").map((t) => t.id);
+      await supabase
+        .from("user_inventory")
+        .update({ equipped: false })
+        .eq("user_id", user.id)
+        .in("item_id", themeIds);
+
+      const themeName = inventoryItem.item.asset_key.replace("theme-", "") || "default";
+      await supabase
+        .from("profiles")
+        .update({ current_theme: themeName })
+        .eq("id", user.id);
+    } else {
+      await supabase
+        .from("profiles")
+        .update({ current_theme: "default" })
+        .eq("id", user.id);
+    }
   }
 
-  // 3. Update inventory equip status
+  // 3. Update inventory equip status for this item
   const { error: updateError } = await supabase
     .from("user_inventory")
     .update({ equipped: equip })

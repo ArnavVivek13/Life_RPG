@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { Profile, UserInventory } from "@/types/database.types";
 import { calculateLevelProgression } from "@/lib/game/math";
 import { drawPlayerSprite, getPalette } from "@/components/world/SpriteEngine";
+import { getItemPerk } from "@/lib/game/items";
 import { Flame, Coins, Shield, Sparkles, Crown, Award, Sword, Heart } from "lucide-react";
 
 interface CharacterCardProps {
@@ -153,6 +154,33 @@ export default function CharacterCard({ profile, inventory = [] }: CharacterCard
               <span>Lifetime Realm XP: {profile.total_xp.toLocaleString()}</span>
               <span>Next Level: {xpForNextLevel - currentLevelXp} XP remaining</span>
             </div>
+
+            {/* Active Equipped Perks & Relics */}
+            {inventory.some((i) => i.equipped && i.item) && (
+              <div className="pt-2 border-t border-slate-800/80 flex flex-wrap items-center gap-1.5">
+                <span className="text-[10px] font-pixel text-amber-400 uppercase tracking-wider flex items-center gap-1 shrink-0">
+                  <Award className="w-3 h-3 text-amber-400" />
+                  <span>Active Relics:</span>
+                </span>
+                {inventory
+                  .filter((i) => i.equipped && i.item)
+                  .map((inv) => {
+                    const perk = getItemPerk(inv.item!.asset_key);
+                    return (
+                      <span
+                        key={inv.id || inv.item_id}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-950 border border-amber-500/40 text-amber-200 text-[10px] font-pixel shadow-sm"
+                        title={perk ? `${inv.item!.name}: ${perk.effectDescription}` : inv.item!.name}
+                      >
+                        <span>{inv.item!.name}</span>
+                        {perk?.badgeLabel && (
+                          <span className="text-emerald-400 font-bold">({perk.badgeLabel})</span>
+                        )}
+                      </span>
+                    );
+                  })}
+              </div>
+            )}
           </div>
 
         </div>
