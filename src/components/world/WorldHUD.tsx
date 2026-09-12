@@ -44,8 +44,74 @@ export default function WorldHUD({
   return (
     <div className="w-full select-none">
       
-      {/* Top RPG Status Bar */}
-      <div className="p-3 sm:p-4 rounded-2xl pixel-box bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border-2 border-amber-500/40 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-3">
+      {/* ── MOBILE COMPACT STATUS BAR (md:hidden) ── */}
+      <div className="md:hidden p-2 px-3 rounded-xl pixel-box bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border border-amber-500/40 shadow-lg flex items-center justify-between gap-2">
+        {/* Left: Avatar Badge & Info */}
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 border border-amber-200 flex items-center justify-center font-bold text-slate-950 font-pixel text-[11px] shadow-sm shrink-0">
+            L{level}
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="font-bold text-xs font-title text-amber-200 truncate max-w-[90px]">
+                {profile.username || "Hero"}
+              </span>
+              <span className="text-[8px] font-pixel px-1.5 py-0.2 rounded bg-slate-800 text-amber-400 border border-amber-500/30 shrink-0">
+                R{Math.min(10, Math.floor(level / 2) + 1)}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-[10px] font-pixel text-slate-400 mt-0.5">
+              <span className="text-amber-300 font-bold flex items-center gap-0.5">
+                <Coins className="w-2.5 h-2.5 text-amber-400" />
+                <span>{profile.gold}G</span>
+              </span>
+              <span className="text-red-300 font-bold flex items-center gap-0.5">
+                <Flame className="w-2.5 h-2.5 text-red-400 fill-red-500/30" />
+                <span>{profile.streak_count}d</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Quick Action Buttons */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            onClick={onOpenShop}
+            className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-300 text-[11px] font-semibold flex items-center gap-1 shadow-sm transition-colors"
+          >
+            <ShoppingBag className="w-3 h-3 text-amber-400" />
+            <span>Shop</span>
+          </button>
+
+          <button
+            onClick={onToggleViewMode}
+            className="px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-bold text-[10px] uppercase font-pixel flex items-center gap-1 shadow-sm transition-transform"
+          >
+            {viewMode === "world" ? (
+              <>
+                <LayoutDashboard className="w-3 h-3" />
+                <span>Tasks</span>
+              </>
+            ) : (
+              <>
+                <Compass className="w-3 h-3" />
+                <span>Map</span>
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={onSignOut}
+            className="p-1.5 rounded-lg bg-red-950/60 hover:bg-red-900/60 border border-red-800/40 text-red-300 transition-colors"
+            title="Leave Realm"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {/* ── LAPTOP/DESKTOP FULL STATUS BAR (hidden md:flex) ── */}
+      <div className="hidden md:flex p-3 sm:p-4 rounded-2xl pixel-box bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border-2 border-amber-500/40 shadow-2xl items-center justify-between gap-3">
         
         {/* Left: Player Profile & Level Crest */}
         <div className="flex items-center gap-3.5 w-full md:w-auto">

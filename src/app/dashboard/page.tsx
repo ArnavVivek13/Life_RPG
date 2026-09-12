@@ -439,7 +439,7 @@ export default function DashboardPage() {
   const hasCowl = inventory.some((i) => i.equipped && i.item?.asset_key === "gear-ranger-cowl");
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0B0E14] via-[#121722] to-[#0B0E14] text-slate-100 p-3 sm:p-6 select-none">
+    <div className="min-h-screen bg-gradient-to-b from-[#0B0E14] via-[#121722] to-[#0B0E14] text-slate-100 p-3 sm:p-6 pb-28 sm:pb-8 select-none">
       <div className="max-w-6xl mx-auto space-y-4">
         
         {/* Top HUD Bar */}

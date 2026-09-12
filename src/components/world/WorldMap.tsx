@@ -32,6 +32,7 @@ import {
 import MiniMapRadar from "./MiniMapRadar";
 import MobileControls from "./MobileControls";
 import RealmFullMapModal from "./RealmFullMapModal";
+import { Compass } from "lucide-react";
 
 interface WorldMapProps {
   theme?: string;
@@ -685,10 +686,10 @@ export default function WorldMap({
     <div
       tabIndex={0}
       className="relative w-full flex flex-col items-center justify-center select-none overflow-hidden rounded-2xl bg-slate-950 border-2 border-slate-700 shadow-2xl focus:outline-none focus:ring-2 focus:ring-amber-400"
-      style={{ touchAction: "none" }}
+      style={{ touchAction: "pan-y" }}
     >
-      {/* Tactical Mini-Map Radar */}
-      <div className="absolute top-4 right-4 z-30 pointer-events-auto">
+      {/* Tactical Mini-Map Radar (Full on Desktop screens) */}
+      <div className="hidden sm:block absolute top-4 right-4 z-30 pointer-events-auto">
         <MiniMapRadar
           playerX={playerCoords.x}
           playerY={playerCoords.y}
@@ -700,17 +701,32 @@ export default function WorldMap({
         />
       </div>
 
-      {/* District Badge */}
-      <div className="absolute top-4 left-4 z-20 pointer-events-none px-3.5 py-1.5 rounded-xl bg-slate-900/90 border border-slate-700 text-xs font-title text-amber-300 shadow-lg flex items-center gap-2">
-        <span
-          className="w-2.5 h-2.5 rounded-full animate-pulse"
-          style={{ backgroundColor: currentDistrict.accentColor }}
-        />
-        <span>{currentDistrict.name}</span>
+      {/* Mobile Floating Full Realm Map Button (Clean & Space-Saving) */}
+      <div className="sm:hidden absolute top-2.5 right-2.5 z-30 pointer-events-auto">
+        <button
+          onClick={() => setIsFullMapOpen(true)}
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900/90 border border-cyan-500/50 text-cyan-300 text-[10px] font-pixel shadow-md backdrop-blur-md active:scale-95 transition-transform"
+          title="Open Realm Map"
+        >
+          <Compass className="w-3.5 h-3.5 text-cyan-400" />
+          <span>Map (M)</span>
+          {activeWaypoint && (
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+          )}
+        </button>
       </div>
 
-      {/* GBA Theme Palette Selector Bar (Fixed non-repeating themes) */}
-      <div className="absolute top-14 left-4 z-20 flex items-center gap-1.5 p-1 rounded-xl bg-slate-900/95 border border-slate-700 shadow-lg backdrop-blur-sm">
+      {/* District Badge (Responsive: compact on mobile) */}
+      <div className="absolute top-2.5 left-2.5 sm:top-4 sm:left-4 z-20 pointer-events-none px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-lg sm:rounded-xl bg-slate-900/90 border border-slate-700 text-[10px] sm:text-xs font-title text-amber-300 shadow-md flex items-center gap-1.5 sm:gap-2 backdrop-blur-sm">
+        <span
+          className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full animate-pulse"
+          style={{ backgroundColor: currentDistrict.accentColor }}
+        />
+        <span className="truncate max-w-[130px] sm:max-w-none">{currentDistrict.name}</span>
+      </div>
+
+      {/* Theme Palette Selector Bar (Desktop/Laptop only, preserves current desktop look) */}
+      <div className="hidden sm:flex absolute top-14 left-4 z-20 items-center gap-1.5 p-1 rounded-xl bg-slate-900/95 border border-slate-700 shadow-lg backdrop-blur-sm">
         {CANONICAL_THEMES.map((themeItem) => {
           const isSelected = activeTheme === themeItem.key;
           return (
@@ -734,29 +750,40 @@ export default function WorldMap({
         })}
       </div>
 
-      {/* Nearby prompt */}
+      {/* Nearby prompt (Desktop: bottom center with keys, Mobile: sleek top-center actionable prompt) */}
       {(nearbyBuilding || nearbyEgg) && (
-        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-20 pointer-events-none px-4 py-2 rounded-xl bg-amber-400/20 border border-amber-400/60 text-amber-300 text-sm font-pixel shadow-lg flex items-center gap-2 backdrop-blur-sm">
-          <span className="animate-bounce">⬆</span>
-          <span>Press <kbd className="px-1.5 py-0.5 bg-slate-800 rounded text-xs">E</kbd> / <kbd className="px-1.5 py-0.5 bg-slate-800 rounded text-xs">Space</kbd> to enter</span>
-          <span className="font-bold text-amber-200">{nearbyBuilding?.name ?? nearbyEgg?.name}</span>
-        </div>
+        <>
+          {/* Desktop Prompt */}
+          <div className="hidden sm:flex absolute bottom-20 left-1/2 -translate-x-1/2 z-20 pointer-events-none px-4 py-2 rounded-xl bg-amber-400/20 border border-amber-400/60 text-amber-300 text-sm font-pixel shadow-lg items-center gap-2 backdrop-blur-sm">
+            <span className="animate-bounce">⬆</span>
+            <span>Press <kbd className="px-1.5 py-0.5 bg-slate-800 rounded text-xs">E</kbd> / <kbd className="px-1.5 py-0.5 bg-slate-800 rounded text-xs">Space</kbd> to enter</span>
+            <span className="font-bold text-amber-200">{nearbyBuilding?.name ?? nearbyEgg?.name}</span>
+          </div>
+          {/* Mobile Tap-to-Enter Floating Prompt */}
+          <button
+            onClick={handleInteract}
+            className="sm:hidden absolute top-10 left-1/2 -translate-x-1/2 z-30 pointer-events-auto px-3 py-1 rounded-full bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 font-pixel text-[10px] font-bold shadow-glowGold flex items-center gap-1.5 animate-bounce active:scale-95"
+          >
+            <span>✨</span>
+            <span>Enter {nearbyBuilding?.name ?? nearbyEgg?.name}</span>
+          </button>
+        </>
       )}
 
-      {/* World Canvas */}
+      {/* World Canvas with pan-y scrolling enabled */}
       <canvas
         ref={canvasRef}
         onClick={handleCanvasClick}
         className="w-full max-w-[960px] h-auto aspect-[16/10] cursor-crosshair"
-        style={{ imageRendering: "pixelated" }}
+        style={{ imageRendering: "pixelated", touchAction: "pan-y" }}
       />
 
       {/* Controls Bar */}
-      <div className="w-full p-2 bg-slate-900/95 border-t border-slate-800 text-center flex items-center justify-between text-[11px] text-slate-400 font-pixel px-4">
+      <div className="w-full p-2 bg-slate-900/95 border-t border-slate-800 text-center flex items-center justify-between text-[11px] text-slate-400 font-pixel px-3 sm:px-4">
         <span className="hidden sm:inline">
           [WASD] / [Arrows] to walk • Click/Tap destination • [E] / [Space] interact
         </span>
-        <span className="sm:hidden">Tap to walk • D-Pad below</span>
+        <span className="sm:hidden text-[10px]">Tap to walk • D-Pad below</span>
         <span className="text-amber-400 text-xs flex items-center gap-1.5">
           <span>{THEME_ICONS[activeTheme] || "🎨"}</span>
           <span>{activePalette.name}</span>
