@@ -94,16 +94,74 @@ function classifyByHeuristics(title: string, description: string = ""): TaskClas
     }
   }
 
-  // Difficulty estimation based on length / intensity keywords
+  // Dynamic volume and effort estimation (so it doesn't default everything to medium 20 XP)
   let difficulty: "easy" | "medium" | "hard" = "medium";
   let suggested_xp = 20;
+  let reason = `Classified as ${bestCategory}`;
 
-  if (content.includes("quick") || content.includes("easy") || content.includes("5 min") || content.includes("short")) {
+  // Check for coding/problem counts (e.g. "10 problems", "2 leetcode", "leetcode 10")
+  const problemMatch = content.match(/(\d+)\s*(?:problems?|questions?|leetcode|tasks?)|(?:leetcode|coding|problems?)\s*(\d+)/i);
+  if (problemMatch) {
+    const count = parseInt(problemMatch[1] || problemMatch[2], 10);
+    if (count <= 2) {
+      difficulty = "easy";
+      suggested_xp = 12;
+      reason = `Classified as ${bestCategory}: ${count} problems is a light practice sprint.`;
+    } else if (count <= 5) {
+      difficulty = "medium";
+      suggested_xp = 25;
+      reason = `Classified as ${bestCategory}: ${count} problems is a solid focused session.`;
+    } else {
+      difficulty = "hard";
+      suggested_xp = Math.min(50, 35 + (count - 6) * 3);
+      reason = `Classified as ${bestCategory}: ${count} problems is an intensive grind marathon!`;
+    }
+  }
+  // Check for distance (e.g. "10km", "2km", "5 miles")
+  else if (content.match(/(\d+(?:\.\d+)?)\s*(?:km|kms|miles?|mi)\b/i)) {
+    const distMatch = content.match(/(\d+(?:\.\d+)?)\s*(?:km|kms|miles?|mi)\b/i);
+    const dist = parseFloat(distMatch![1]);
+    if (dist <= 2.5) {
+      difficulty = "easy";
+      suggested_xp = 12;
+      reason = `Classified as ${bestCategory}: ${dist}km is a light cardio warmup.`;
+    } else if (dist <= 6) {
+      difficulty = "medium";
+      suggested_xp = 25;
+      reason = `Classified as ${bestCategory}: ${dist}km is a solid stamina run.`;
+    } else {
+      difficulty = "hard";
+      suggested_xp = 45;
+      reason = `Classified as ${bestCategory}: ${dist}km is an endurance challenge!`;
+    }
+  }
+  // Check for reading pages (e.g. "100 pages", "10 pages")
+  else if (content.match(/(\d+)\s*(?:pages?|pgs?)/i)) {
+    const pageMatch = content.match(/(\d+)\s*(?:pages?|pgs?)/i);
+    const pages = parseInt(pageMatch![1], 10);
+    if (pages <= 15) {
+      difficulty = "easy";
+      suggested_xp = 12;
+      reason = `Classified as ${bestCategory}: ${pages} pages is a quick reading session.`;
+    } else if (pages <= 50) {
+      difficulty = "medium";
+      suggested_xp = 25;
+      reason = `Classified as ${bestCategory}: ${pages} pages is a focused chapter study.`;
+    } else {
+      difficulty = "hard";
+      suggested_xp = 45;
+      reason = `Classified as ${bestCategory}: ${pages} pages is an extensive reading marathon!`;
+    }
+  }
+  // Keyword-based general fallback
+  else if (content.includes("quick") || content.includes("easy") || content.includes("5 min") || content.includes("short") || content.includes("tiny")) {
     difficulty = "easy";
     suggested_xp = 10;
+    reason = `Classified as ${bestCategory}: Bite-sized task.`;
   } else if (content.includes("complete") || content.includes("exam") || content.includes("marathon") || content.includes("project") || content.includes("deep") || content.includes("hard")) {
     difficulty = "hard";
-    suggested_xp = 35;
+    suggested_xp = 40;
+    reason = `Classified as ${bestCategory}: High-intensity milestone.`;
   }
 
   return {
@@ -111,7 +169,7 @@ function classifyByHeuristics(title: string, description: string = ""): TaskClas
     difficulty,
     suggested_xp,
     is_gibberish: false,
-    reason: `Classified as ${bestCategory} via key terms matching.`,
+    reason,
   };
 }
 
