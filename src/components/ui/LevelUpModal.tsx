@@ -103,7 +103,7 @@ export default function LevelUpModal({
         <div className="space-y-2">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-pixel uppercase tracking-widest animate-bounce">
             <Trophy className="w-3.5 h-3.5 text-amber-400" />
-            <span>Quest Complete!</span>
+            <span>Hero Level Up!</span>
           </div>
 
           <h2 id="levelup-title" className="text-3xl sm:text-4xl font-black font-title text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-500 drop-shadow-[0_2px_15px_rgba(245,158,11,0.5)]">

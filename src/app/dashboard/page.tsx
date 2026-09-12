@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { Profile, Attribute, Task, UserInventory, ShopItem } from "@/types/database.types";
 import { completeTaskAction } from "@/app/actions/game";
+import { calculateLevelProgression } from "@/lib/game/math";
 import WorldMap from "@/components/world/WorldMap";
 import WorldHUD from "@/components/world/WorldHUD";
 import { Building, EasterEgg, DistrictZone, DISTRICT_ZONES, BUILDINGS } from "@/components/world/WorldMapData";
@@ -309,6 +310,38 @@ export default function DashboardPage() {
     } catch {}
   }, []);
 
+  // Synthesize pleasant quest claim chime (Web Audio API)
+  const playQuestClaimSound = useCallback(() => {
+    if (typeof window === "undefined") return;
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    try {
+      const ctx = new AudioCtx();
+      // Ascending major chime: E5 (659.25 Hz) then A5 (880 Hz)
+      const notes = [
+        { freq: 659.25, time: 0, duration: 0.16 },
+        { freq: 880.00, time: 0.08, duration: 0.28 },
+      ];
+
+      notes.forEach(({ freq, time, duration }) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        const startTime = ctx.currentTime + time;
+        osc.frequency.setValueAtTime(freq, startTime);
+
+        gain.gain.setValueAtTime(0.2, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+      });
+    } catch {}
+  }, []);
+
   const handleAnvilStrike = () => {
     playAnvilSound();
     confetti({
@@ -401,6 +434,10 @@ export default function DashboardPage() {
 
   // Handle Quest Completion
   const handleCompleteTask = async (task: Task) => {
+    // 1. Play immediate audio feedback for quest claim
+    playQuestClaimSound();
+
+    // 2. Optimistic task status update
     setTasks((prev) =>
       prev.map((t) =>
         t.id === task.id
@@ -409,13 +446,18 @@ export default function DashboardPage() {
       )
     );
 
+    const prevLevel = calculateLevelProgression(profile.total_xp).level;
     const result = await completeTaskAction(task.id);
 
     if (result.success && result.data) {
       const { awarded_xp, awarded_gold, new_total_xp, new_level } = result.data;
+      const finalTotalXp = new_total_xp || (profile.total_xp + awarded_xp);
+      const computedProgression = calculateLevelProgression(finalTotalXp);
+      const finalLevel = new_level || computedProgression.level;
+
       setProfile((prev) => ({
         ...prev,
-        total_xp: new_total_xp || prev.total_xp + awarded_xp,
+        total_xp: finalTotalXp,
         gold: prev.gold + awarded_gold,
       }));
 
@@ -425,18 +467,29 @@ export default function DashboardPage() {
         )
       );
 
-      setLevelUpData({
-        isOpen: true,
-        newLevel: new_level || 1,
-        awardedXp: awarded_xp || task.base_xp,
-        awardedGold: awarded_gold || 10,
-        category: task.category,
-      });
+      // ONLY pop up if the player actually leveled up
+      if (finalLevel > prevLevel) {
+        setLevelUpData({
+          isOpen: true,
+          newLevel: finalLevel,
+          awardedXp: awarded_xp || task.base_xp,
+          awardedGold: awarded_gold || 10,
+          category: task.category,
+        });
+      } else {
+        // Small celebratory sparkle burst without modal interruption
+        confetti({
+          particleCount: 22,
+          spread: 50,
+          origin: { y: 0.75 },
+          colors: ["#F59E0B", "#10B981", "#3B82F6", "#EC4899"],
+        });
+      }
     } else {
       const xp = task.base_xp;
       const gold = Math.max(5, Math.round(xp * 0.5));
       const newTotal = profile.total_xp + xp;
-      const newLvl = Math.floor(1 + Math.log(1 + (newTotal * 0.15) / 100) / Math.log(1.15));
+      const finalLevel = calculateLevelProgression(newTotal).level;
 
       setProfile((prev) => ({
         ...prev,
@@ -444,13 +497,23 @@ export default function DashboardPage() {
         gold: prev.gold + gold,
       }));
 
-      setLevelUpData({
-        isOpen: true,
-        newLevel: Math.max(1, newLvl),
-        awardedXp: xp,
-        awardedGold: gold,
-        category: task.category,
-      });
+      // ONLY pop up if the player actually leveled up
+      if (finalLevel > prevLevel) {
+        setLevelUpData({
+          isOpen: true,
+          newLevel: finalLevel,
+          awardedXp: xp,
+          awardedGold: gold,
+          category: task.category,
+        });
+      } else {
+        confetti({
+          particleCount: 22,
+          spread: 50,
+          origin: { y: 0.75 },
+          colors: ["#F59E0B", "#10B981", "#3B82F6", "#EC4899"],
+        });
+      }
     }
   };
 
